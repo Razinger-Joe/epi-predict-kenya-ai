@@ -7,6 +7,11 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import DashboardPredictions from "./pages/DashboardPredictions";
+import DashboardAlerts from "./pages/DashboardAlerts";
+import DashboardAnalytics from "./pages/DashboardAnalytics";
+import DashboardCounties from "./pages/DashboardCounties";
+import DashboardSettings from "./pages/DashboardSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +27,11 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/predictions" element={<DashboardPredictions />} />
+          <Route path="/dashboard/alerts" element={<DashboardAlerts />} />
+          <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
+          <Route path="/dashboard/counties" element={<DashboardCounties />} />
+          <Route path="/dashboard/settings" element={<DashboardSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
