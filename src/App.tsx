@@ -12,6 +12,7 @@ import DashboardAlerts from "./pages/DashboardAlerts";
 import DashboardAnalytics from "./pages/DashboardAnalytics";
 import DashboardCounties from "./pages/DashboardCounties";
 import DashboardSettings from "./pages/DashboardSettings";
+import InvestorPresentation from "./pages/InvestorPresentation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
           <Route path="/dashboard/counties" element={<DashboardCounties />} />
           <Route path="/dashboard/settings" element={<DashboardSettings />} />
+          <Route path="/investor-presentation" element={<InvestorPresentation />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
