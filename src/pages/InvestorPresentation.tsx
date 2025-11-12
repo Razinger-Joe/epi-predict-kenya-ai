@@ -396,7 +396,7 @@ const InvestorPresentation = () => {
                 <div className="text-sm font-bold text-green-700 mb-2">Phase 1: Nairobi (Months 1-6)</div>
                 <ul className="text-xs text-gray-700 space-y-1">
                   <li>• 3-5 pilots in Nairobi</li>
-                  <li>• Prove >90% accuracy</li>
+                  <li>• Prove {'>'}90% accuracy</li>
                   <li>• Convert to 3-5 paying customers</li>
                   <li>• <strong>Target: KSh 4M ARR</strong></li>
                 </ul>
@@ -757,7 +757,7 @@ const InvestorPresentation = () => {
                 <li className="flex gap-3">
                   <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
                   <div>
-                    <strong>MVP Built & Tested:</strong> Working prototype with >95% accuracy on historical Kenyan outbreak data
+                    <strong>MVP Built & Tested:</strong> Working prototype with {'>'}95% accuracy on historical Kenyan outbreak data
                   </div>
                 </li>
                 <li className="flex gap-3">
