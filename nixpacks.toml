@@ -1,0 +1,13 @@
+# 🎓 LEARNING: nixpacks.toml
+# This tells Railway/Nixpacks which builder to use
+# Since we have both frontend (Node) and backend (Python),
+# we need to explicitly tell it to use Python for deployment
+
+[phases.setup]
+nixPkgs = ["python311", "pip"]
+
+[phases.install]
+cmds = ["cd backend && pip install -r requirements.txt"]
+
+[start]
+cmd = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"
