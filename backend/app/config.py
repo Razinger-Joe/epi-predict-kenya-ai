@@ -1,5 +1,5 @@
 """
-🎓 LEARNING: config.py - Configuration Management
+config.py - Configuration Management
 
 This file handles all your application's configuration using environment variables.
 Why environment variables?
@@ -8,24 +8,23 @@ Why environment variables?
 3. Best Practice - The "12-Factor App" methodology recommends this
 
 We use Pydantic Settings to:
-- Load values from .env file
+- Load values from .env file (if it exists)
+- Fall back to system environment variables (Railway injects these)
 - Validate that required values exist
 - Provide type hints for IDE support
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
     """
-    🎓 LEARNING: Pydantic Settings
+    Pydantic Settings class - reads from environment variables.
     
-    This class automatically reads from environment variables.
-    Variable names match the attribute names (case-insensitive).
-    
-    Example:
-        SUPABASE_URL in .env → settings.SUPABASE_URL in code
+    In development: reads from .env file
+    In production (Railway): reads from injected env vars
     """
     
     # ═══════════════════════════════════════════════════════════════════════════
@@ -39,14 +38,15 @@ class Settings(BaseSettings):
     # ═══════════════════════════════════════════════════════════════════════════
     FRONTEND_URL: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"
+    PORT: int = 8000  # Railway sets this automatically
     
-    # 🎓 LEARNING: model_config replaces the old "class Config"
-    # This tells Pydantic where to find the .env file
-    model_config = {
-        "env_file": ".env",
-        "env_file_encoding": "utf-8",
-        "case_sensitive": False,  # SUPABASE_URL = supabase_url
-    }
+    # Configuration using modern Pydantic v2 syntax
+    model_config = SettingsConfigDict(
+        env_file=".env",           # Load from .env if it exists
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",            # Ignore unexpected env vars (Railway adds many)
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
