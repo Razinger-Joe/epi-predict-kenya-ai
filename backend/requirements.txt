@@ -7,11 +7,8 @@ python-dotenv==1.0.1
 pydantic==2.6.1
 pydantic-settings==2.1.0
 
-# Supabase
+# Supabase (let it manage httpx version)
 supabase==2.3.4
-
-# HTTP client (for external APIs)
-httpx==0.26.0
 
 # Date/time handling
 python-dateutil==2.8.2
