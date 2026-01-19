@@ -51,10 +51,12 @@ def get_supabase_client() -> Client:
 # (For more complex apps, use dependency injection instead)
 try:
     supabase: Client = get_supabase_client()
-except ValueError:
+except (ValueError, Exception) as e:
     # During development/testing, allow app to start without Supabase
+    # This catches both missing credentials AND invalid API key errors
     supabase = None
-    print("⚠️ Warning: Supabase not configured. Database features disabled.")
+    print(f"⚠️ Warning: Supabase not configured or invalid credentials: {e}")
+    print("   Database features disabled. API will use mock data.")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
