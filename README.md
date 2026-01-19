@@ -1,73 +1,208 @@
-# Welcome to your Lovable project
+# EpiPredict Kenya AI 🇰🇪
 
-## Project info
+<div align="center">
 
-**URL**: https://lovable.dev/projects/fdbf0448-8979-4677-bc30-382734af20ab
+![EpiPredict Kenya](src/assets/hero-kenya-map.png)
 
-## How can I edit this code?
+**AI-Powered Disease Outbreak Prediction for Kenya**
 
-There are several ways of editing your application.
+[![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 
-**Use Lovable**
+[Demo](#demo) • [Features](#features) • [Installation](#installation) • [Project Structure](#project-structure) • [Contributing](#contributing)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fdbf0448-8979-4677-bc30-382734af20ab) and start prompting.
+</div>
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## Overview
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+EpiPredict Kenya AI is a disease surveillance platform designed for Kenyan healthcare organizations. It helps hospitals, pharmacies, and county health departments predict disease outbreaks **14-21 days in advance** with high accuracy, enabling proactive public health responses.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Who Is This For?
 
-Follow these steps:
+- 🏥 **Hospitals** - Monitor patient trends and prepare for outbreaks
+- 💊 **Pharmacy Chains** - Track medication demand patterns
+- 🏛️ **County Health Departments** - Coordinate regional responses
+- 🔬 **Research Institutions** - Analyze epidemiological data
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Features
 
-# Step 3: Install the necessary dependencies.
-npm i
+| Feature | Description |
+|---------|-------------|
+| 📊 **Real-time Dashboard** | Monitor disease trends across all 47 Kenyan counties |
+| 🔮 **Predictive Analytics** | AI-powered outbreak predictions 14-21 days ahead |
+| 🚨 **Smart Alerts** | Receive notifications when risk levels change |
+| 🗺️ **County Mapping** | Visualize outbreak data geographically |
+| 🌙 **Dark Mode** | Full dark mode support |
+| 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## Demo
+
+### Landing Page
+The landing page showcases the platform's capabilities with Kenya-themed design elements (green/red from the national flag).
+
+### Dashboard
+The dashboard provides:
+- Active alert counts
+- High-risk county identification  
+- Real-time system status
+- Animated statistics cards
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | React 18 |
+| **Language** | TypeScript 5.8 |
+| **Build Tool** | Vite 5.4 |
+| **Styling** | TailwindCSS 3.4 |
+| **Components** | shadcn/ui + Radix UI |
+| **State** | TanStack Query (React Query) |
+| **Routing** | React Router DOM v6 |
+| **Forms** | React Hook Form + Zod |
+| **Charts** | Recharts |
+| **Icons** | Lucide React |
+
+---
+
+## Installation
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or bun
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/Razinger-Joe/epi-predict-kenya-ai.git
+
+# Navigate to project directory
+cd epi-predict-kenya-ai
+
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Available Scripts
 
-**Use GitHub Codespaces**
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Run ESLint |
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+---
 
-## What technologies are used for this project?
+## Project Structure
 
-This project is built with:
+```
+epi-predict-kenya-ai/
+├── public/                 # Static assets
+├── src/
+│   ├── assets/            # Images (hero-kenya-map.png)
+│   ├── components/
+│   │   ├── dashboard/     # Dashboard-specific components
+│   │   │   ├── DashboardHeader.tsx
+│   │   │   ├── DashboardSidebar.tsx
+│   │   │   └── StatCards.tsx
+│   │   ├── ui/            # shadcn/ui components (49 components)
+│   │   ├── Features.tsx   # Landing page features section
+│   │   ├── FinalCTA.tsx   # Call to action section
+│   │   ├── Footer.tsx     # Footer component
+│   │   ├── Header.tsx     # Navigation header
+│   │   ├── Hero.tsx       # Hero section
+│   │   └── SocialProof.tsx
+│   ├── hooks/             # Custom React hooks
+│   │   ├── use-mobile.tsx
+│   │   └── use-toast.ts
+│   ├── lib/
+│   │   └── utils.ts       # Utility functions (cn helper)
+│   ├── pages/
+│   │   ├── Dashboard.tsx  # Main dashboard page
+│   │   ├── Index.tsx      # Landing page
+│   │   ├── Login.tsx      # Login page
+│   │   ├── NotFound.tsx   # 404 page
+│   │   └── Signup.tsx     # Multi-step signup
+│   ├── App.tsx            # Main app with routing
+│   ├── index.css          # Global styles & design tokens
+│   └── main.tsx           # Entry point
+├── components.json         # shadcn/ui configuration
+├── tailwind.config.ts      # Tailwind configuration
+├── tsconfig.json          # TypeScript configuration
+└── vite.config.ts         # Vite configuration
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## Design System
 
-Simply open [Lovable](https://lovable.dev/projects/fdbf0448-8979-4677-bc30-382734af20ab) and click on Share -> Publish.
+The app uses a Kenya-inspired color scheme:
 
-## Can I connect a custom domain to my Lovable project?
+| Token | Light Mode | Dark Mode | Purpose |
+|-------|------------|-----------|---------|
+| `--primary` | Kenya Green | Kenya Green (brighter) | Primary actions |
+| `--accent` | Medical Blue | Medical Blue | Secondary emphasis |
+| `--destructive` | Kenya Red | Kenya Red | Alerts & warnings |
 
-Yes, you can!
+Custom CSS variables are defined in `src/index.css` with full dark mode support.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+---
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## Roadmap
+
+- [ ] Backend integration (Supabase authentication)
+- [ ] Real disease data API integration
+- [ ] Dashboard sub-pages (Predictions, Alerts, Analytics, Counties, Settings)
+- [ ] Export functionality (PDF reports)
+- [ ] Mobile app (React Native)
+
+---
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- Built with [Lovable.dev](https://lovable.dev)
+- UI components from [shadcn/ui](https://ui.shadcn.com/)
+- Icons from [Lucide](https://lucide.dev/)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for Kenya's healthcare system**
+
+</div>
