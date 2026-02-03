@@ -4,18 +4,41 @@
 This is where your FastAPI application starts. Think of it as the "index.js" 
 of your backend. It:
 1. Creates the FastAPI app instance
-2. Configures middleware (like CORS)
+2. Configures middleware (like CORS, logging, error handling)
 3. Includes all your API routes
+4. Sets up exception handlers
 """
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
 
 # Import our configuration
 from app.config import settings
 
 # Import routers (we'll create these next)
 from app.routers import health, diseases, counties, predictions
+
+# Import core modules for SDLC improvements
+from app.core.middleware import (
+    RequestIDMiddleware,
+    LoggingMiddleware,
+    PerformanceMonitoringMiddleware,
+    SecurityHeadersMiddleware,
+    configure_logging
+)
+from app.core.exceptions import (
+    APIException,
+    api_exception_handler,
+    general_exception_handler,
+    validation_exception_handler
+)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎓 LEARNING: Logging Configuration
+# ═══════════════════════════════════════════════════════════════════════════════
+# Configure structured JSON logging for all modules
+configure_logging()
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎓 LEARNING: Creating the FastAPI Application
@@ -30,6 +53,18 @@ app = FastAPI(
     docs_url="/docs",      # Swagger UI location
     redoc_url="/redoc",    # ReDoc location
 )
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🎓 LEARNING: Middleware Stack (Order Matters!)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Middleware is processed in REVERSE order (last added = first executed)
+# Security headers should be applied first (before CORS)
+# Then request tracking, then logging
+
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(PerformanceMonitoringMiddleware)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(RequestIDMiddleware)
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎓 LEARNING: CORS (Cross-Origin Resource Sharing)
@@ -51,6 +86,15 @@ app.add_middleware(
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# 🎓 LEARNING: Exception Handlers
+# ═══════════════════════════════════════════════════════════════════════════════
+# These handlers catch exceptions and convert them to proper responses
+
+app.add_exception_handler(APIException, api_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # 🎓 LEARNING: Including Routers
 # ═══════════════════════════════════════════════════════════════════════════════
 # Instead of putting ALL endpoints in main.py, we organize them into "routers".
@@ -58,9 +102,9 @@ app.add_middleware(
 # The prefix adds a path prefix to all endpoints in that router.
 
 app.include_router(health.router, tags=["Health"])
-app.include_router(diseases.router, prefix="/api/diseases", tags=["Diseases"])
-app.include_router(counties.router, prefix="/api/counties", tags=["Counties"])
-app.include_router(predictions.router, prefix="/api/predictions", tags=["Predictions"])
+app.include_router(diseases.router, prefix="/api/v1/diseases", tags=["Diseases"])
+app.include_router(counties.router, prefix="/api/v1/counties", tags=["Counties"])
+app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["Predictions"])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎓 LEARNING: Root Endpoint
