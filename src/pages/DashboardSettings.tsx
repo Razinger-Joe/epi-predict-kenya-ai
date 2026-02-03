@@ -8,24 +8,26 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 
 const DashboardSettings = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          
+
           <main className="flex-1 p-6">
+            <DashboardBreadcrumbs />
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">Settings</h1>
               <p className="text-muted-foreground mt-1">
                 Manage your account and preferences
               </p>
             </div>
-            
+
             <Tabs defaultValue="profile" className="space-y-6">
               <TabsList>
                 <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -49,7 +51,7 @@ const DashboardSettings = () => {
                       </Avatar>
                       <Button variant="outline">Change Avatar</Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
@@ -68,7 +70,7 @@ const DashboardSettings = () => {
                         <Input id="title" defaultValue="Hospital Administrator" />
                       </div>
                     </div>
-                    
+
                     <Button>Save Changes</Button>
                   </CardContent>
                 </Card>
@@ -168,7 +170,7 @@ const DashboardSettings = () => {
                       </div>
                       <Switch id="monitor-all" defaultChecked />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Disease Monitoring</Label>
                       <div className="space-y-3">

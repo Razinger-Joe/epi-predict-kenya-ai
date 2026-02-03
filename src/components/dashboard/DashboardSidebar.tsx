@@ -62,6 +62,7 @@ export function DashboardSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location.pathname === item.url}
+                    tooltip={item.title}
                   >
                     <Link to={item.url}>
                       <item.icon className="w-4 h-4" />
@@ -83,7 +84,7 @@ export function DashboardSidebar() {
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip="Help & Support">
               <a href="#">
                 <HelpCircle className="w-4 h-4" />
                 <span>Help & Support</span>
@@ -91,7 +92,7 @@ export function DashboardSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
+            <SidebarMenuButton asChild tooltip="Logout">
               <Link to="/login">
                 <LogOut className="w-4 h-4" />
                 <span>Logout</span>

@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
+import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 
 const counties = [
   { name: "Nairobi", disease: "Malaria", risk: 85, trend: "up", trendValue: 12, peakDate: "Oct 30, 2025" },
@@ -47,18 +48,20 @@ const DashboardCounties = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          
+
           <main className="flex-1 p-6">
+            <DashboardBreadcrumbs />
+
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">High Risk Counties Overview</h1>
               <p className="text-muted-foreground mt-1">
                 County-level disease outbreak risk assessment
               </p>
             </div>
-            
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -101,8 +104,8 @@ const DashboardCounties = () => {
                                   variant={riskLevel.color === "destructive" ? "destructive" : "outline"}
                                   className={
                                     riskLevel.color === "orange" ? "bg-orange-500 text-white border-orange-500" :
-                                    riskLevel.color === "yellow" ? "bg-yellow-500 text-white border-yellow-500" :
-                                    riskLevel.color === "primary" ? "bg-primary text-primary-foreground" : ""
+                                      riskLevel.color === "yellow" ? "bg-yellow-500 text-white border-yellow-500" :
+                                        riskLevel.color === "primary" ? "bg-primary text-primary-foreground" : ""
                                   }
                                 >
                                   {riskLevel.label}

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, MapPin, Clock } from "lucide-react";
+import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 
 const alerts = [
   {
@@ -88,11 +89,13 @@ const DashboardAlerts = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          
+
           <main className="flex-1 p-6">
+            <DashboardBreadcrumbs />
+
             <div className="mb-8 flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Active Alerts</h1>
@@ -105,14 +108,13 @@ const DashboardAlerts = () => {
                 <Button variant="outline">Export Report</Button>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {alerts.map((alert) => (
-                <Card key={alert.id} className={`border-2 ${
-                  alert.level === "critical" ? "border-destructive" :
+                <Card key={alert.id} className={`border-2 ${alert.level === "critical" ? "border-destructive" :
                   alert.level === "high" ? "border-orange-500" :
-                  "border-yellow-500"
-                }`}>
+                    "border-yellow-500"
+                  }`}>
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       {getLevelBadge(alert.level)}

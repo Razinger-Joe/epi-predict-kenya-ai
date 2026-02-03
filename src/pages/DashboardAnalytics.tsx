@@ -70,23 +70,26 @@ const diseaseData = [
   }
 ];
 
+import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
+
 const DashboardAnalytics = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          
+
           <main className="flex-1 p-6">
+            <DashboardBreadcrumbs />
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
               <p className="text-muted-foreground mt-1">
                 Disease trends and outbreak analytics across Kenya
               </p>
             </div>
-            
+
             <div className="space-y-6">
               {/* Disease Trends Chart */}
               <Card>

@@ -4,6 +4,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 
 const predictions = [
   {
@@ -96,34 +97,35 @@ const DashboardPredictions = () => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <DashboardSidebar />
-        
+
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          
+
           <main className="flex-1 p-6">
+            <DashboardBreadcrumbs />
+
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-foreground">14-Day Outbreak Forecast</h1>
               <p className="text-muted-foreground mt-1">
                 AI-powered predictions for disease outbreaks across Kenya
               </p>
             </div>
-            
+
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-orange-500 to-destructive" />
-              
+
               {/* Prediction cards */}
               <div className="space-y-6">
                 {predictions.map((prediction, index) => (
                   <div key={prediction.id} className="relative pl-20">
                     {/* Timeline dot */}
-                    <div className={`absolute left-6 top-6 w-5 h-5 rounded-full border-4 border-background ${
-                      prediction.level === "critical" ? "bg-destructive" :
+                    <div className={`absolute left-6 top-6 w-5 h-5 rounded-full border-4 border-background ${prediction.level === "critical" ? "bg-destructive" :
                       prediction.level === "high" ? "bg-orange-500" :
-                      prediction.level === "medium" ? "bg-yellow-500" :
-                      "bg-primary"
-                    }`} />
-                    
+                        prediction.level === "medium" ? "bg-yellow-500" :
+                          "bg-primary"
+                      }`} />
+
                     <Card className={`border-2 ${getLevelColor(prediction.level)}`}>
                       <CardHeader>
                         <div className="flex items-start justify-between">
@@ -144,12 +146,11 @@ const DashboardPredictions = () => {
                           <span className="font-medium">Locations:</span>
                           <span>{prediction.locations.join(", ")}</span>
                         </div>
-                        <div className={`p-3 rounded-lg ${
-                          prediction.level === "critical" ? "bg-destructive/10" :
+                        <div className={`p-3 rounded-lg ${prediction.level === "critical" ? "bg-destructive/10" :
                           prediction.level === "high" ? "bg-orange-500/10" :
-                          prediction.level === "medium" ? "bg-yellow-500/10" :
-                          "bg-primary/10"
-                        }`}>
+                            prediction.level === "medium" ? "bg-yellow-500/10" :
+                              "bg-primary/10"
+                          }`}>
                           <p className="text-sm font-medium">Recommended Action</p>
                           <p className="text-sm mt-1">{prediction.action}</p>
                         </div>
