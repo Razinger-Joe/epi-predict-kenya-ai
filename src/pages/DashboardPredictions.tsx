@@ -3,8 +3,11 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, TrendingUp, TrendingDown, Minus, AlertCircle } from "lucide-react";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const predictions = [
   {
@@ -93,6 +96,31 @@ const getLevelColor = (level: string) => {
 };
 
 const DashboardPredictions = () => {
+  const [acknowledgedAlerts, setAcknowledgedAlerts] = useState<number[]>([]);
+  const [isProcessing, setIsProcessing] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const handleAcknowledgeAlert = useCallback(async (predictionId: number, action: string) => {
+    setIsProcessing(predictionId);
+    try {
+      // Simulate action processing
+      await new Promise(resolve => setTimeout(resolve, 600));
+      
+      setAcknowledgedAlerts(prev => [...prev, predictionId]);
+      toast({
+        title: "Action Recorded",
+        description: `Alert acknowledged: "${action}"`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to process action",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(null);
+    }
+  }, [toast]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -153,6 +181,22 @@ const DashboardPredictions = () => {
                           }`}>
                           <p className="text-sm font-medium">Recommended Action</p>
                           <p className="text-sm mt-1">{prediction.action}</p>
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            variant={acknowledgedAlerts.includes(prediction.id) ? "outline" : "default"}
+                            size="sm"
+                            onClick={() => handleAcknowledgeAlert(prediction.id, prediction.action)}
+                            disabled={isProcessing === prediction.id || acknowledgedAlerts.includes(prediction.id)}
+                          >
+                            <AlertCircle className="w-4 h-4 mr-1" />
+                            {isProcessing === prediction.id 
+                              ? "Processing..." 
+                              : acknowledgedAlerts.includes(prediction.id)
+                              ? "Acknowledged"
+                              : "Acknowledge & Action"
+                            }
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>

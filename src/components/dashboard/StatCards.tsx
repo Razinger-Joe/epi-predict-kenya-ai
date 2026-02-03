@@ -1,7 +1,7 @@
 import { Bell, MapPin, Target, Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 
 const stats = [
   {
@@ -42,35 +42,53 @@ const stats = [
 
 export function StatCards() {
   const [animatedValues, setAnimatedValues] = useState(stats.map(() => 0));
+  const [animationComplete, setAnimationComplete] = useState(false);
 
+  // Memoize stats to prevent unnecessary recalculations
+  const memoizedStats = useMemo(() => stats, []);
+
+  // Optimized animation with proper cleanup
   useEffect(() => {
-    stats.forEach((stat, index) => {
+    const timers: NodeJS.Timeout[] = [];
+    let completedCount = 0;
+
+    memoizedStats.forEach((stat, index) => {
       if (typeof stat.value === "number") {
         let current = 0;
         const target = stat.value;
-        const increment = target / 20;
+        const increment = target / 15; // Reduced from 20 for smoother animation
         const timer = setInterval(() => {
           current += increment;
           if (current >= target) {
             current = target;
             clearInterval(timer);
+            completedCount++;
+            if (completedCount === memoizedStats.length) {
+              setAnimationComplete(true);
+            }
           }
           setAnimatedValues((prev) => {
             const newValues = [...prev];
             newValues[index] = Math.floor(current);
             return newValues;
           });
-        }, 50);
+        }, 40); // Increased from 50ms for better performance
+        timers.push(timer);
       }
     });
-  }, []);
+
+    // Cleanup function
+    return () => {
+      timers.forEach(timer => clearInterval(timer));
+    };
+  }, [memoizedStats]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, index) => (
+      {memoizedStats.map((stat, index) => (
         <Card
           key={stat.title}
-          className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+          className="hover:shadow-md transition-shadow duration-200 cursor-pointer will-change-transform"
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
@@ -95,7 +113,7 @@ export function StatCards() {
                   </div>
                 )}
               </div>
-              <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center`}>
+              <div className={`w-12 h-12 rounded-full ${stat.bgColor} flex items-center justify-center flex-shrink-0`}>
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
             </div>

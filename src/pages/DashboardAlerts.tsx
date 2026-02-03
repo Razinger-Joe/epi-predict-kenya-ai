@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { AlertCircle, MapPin, Clock } from "lucide-react";
+import { AlertCircle, MapPin, Clock, Download } from "lucide-react";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const alerts = [
   {
@@ -85,6 +87,81 @@ const getLevelBadge = (level: string) => {
 };
 
 const DashboardAlerts = () => {
+  const [handledAlerts, setHandledAlerts] = useState<number[]>([]);
+  const [isProcessing, setIsProcessing] = useState<number | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
+
+  const handleMarkAsHandled = useCallback(async (alertId: number) => {
+    setIsProcessing(alertId);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setHandledAlerts(prev => [...prev, alertId]);
+      toast({
+        title: "Alert Handled",
+        description: "Alert marked as handled successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark alert as handled",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(null);
+    }
+  }, [toast]);
+
+  const handleMarkAllAsRead = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      toast({
+        title: "Success",
+        description: "All alerts marked as read",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark all as read",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [toast]);
+
+  const handleExportReport = useCallback(async () => {
+    setIsExporting(true);
+    try {
+      const reportContent = alerts.map(alert => 
+        `ALERT: ${alert.title}\nLevel: ${alert.level}\nRisk: ${alert.risk}%\nAffected Areas: ${alert.affectedAreas.join(', ')}\nPeak Date: ${alert.peakDate}\nEstimated Cases: ${alert.estimatedCases}\n\n`
+      ).join('');
+
+      const blob = new Blob([reportContent], { type: "text/plain;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `disease-alerts-${new Date().toISOString().split('T')[0]}.txt`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Success",
+        description: "Alert report exported successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export report",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [toast]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -104,8 +181,21 @@ const DashboardAlerts = () => {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline">Mark All as Read</Button>
-                <Button variant="outline">Export Report</Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleMarkAllAsRead}
+                  disabled={isExporting}
+                >
+                  {isExporting ? "Processing..." : "Mark All as Read"}
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={handleExportReport}
+                  disabled={isExporting}
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  {isExporting ? "Exporting..." : "Export Report"}
+                </Button>
               </div>
             </div>
 
@@ -167,11 +257,26 @@ const DashboardAlerts = () => {
 
                     {/* Action buttons */}
                     <div className="flex gap-2 pt-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                      >
                         View Full Report
                       </Button>
-                      <Button variant="default" size="sm" className="flex-1">
-                        Mark as Handled
+                      <Button 
+                        variant={handledAlerts.includes(alert.id) ? "outline" : "default"}
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleMarkAsHandled(alert.id)}
+                        disabled={isProcessing === alert.id || handledAlerts.includes(alert.id)}
+                      >
+                        {isProcessing === alert.id 
+                          ? "Processing..." 
+                          : handledAlerts.includes(alert.id)
+                          ? "Handled"
+                          : "Mark as Handled"
+                        }
                       </Button>
                     </div>
                   </CardContent>

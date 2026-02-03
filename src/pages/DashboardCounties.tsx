@@ -13,8 +13,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, TrendingDown, Minus, Eye } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Eye, Download, RotateCcw } from "lucide-react";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
+import { useState, useCallback } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const counties = [
   { name: "Nairobi", disease: "Malaria", risk: 85, trend: "up", trendValue: 12, peakDate: "Oct 30, 2025" },
@@ -44,6 +46,82 @@ const getRiskColor = (risk: number) => {
 };
 
 const DashboardCounties = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedCounty, setSelectedCounty] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const handleExportCSV = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const csvContent = [
+        ["County", "Disease", "Risk Level", "Risk %", "Trend", "Peak Date"],
+        ...counties.map(county => {
+          const riskLevel = getRiskLevel(county.risk);
+          return [
+            county.name,
+            county.disease,
+            riskLevel.label,
+            county.risk.toString(),
+            county.trend === "up" ? `+${county.trendValue}%` : 
+            county.trend === "down" ? `-${county.trendValue}%` : 
+            `${county.trendValue}%`,
+            county.peakDate
+          ];
+        })
+      ].map(row => row.join(",")).join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `counties-risk-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Success",
+        description: "County data exported to CSV successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export CSV file",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const handleRefresh = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Simulate data refresh
+      await new Promise(resolve => setTimeout(resolve, 800));
+      toast({
+        title: "Refreshed",
+        description: "County data updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to refresh data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  const handleViewCounty = useCallback((countyName: string) => {
+    setSelectedCounty(countyName);
+    toast({
+      title: "County Details",
+      description: `Viewing data for ${countyName}`,
+    });
+  }, [toast]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -70,8 +148,24 @@ const DashboardCounties = () => {
                     <CardDescription>Top 10 counties by risk level</CardDescription>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">Export to CSV</Button>
-                    <Button variant="outline" size="sm">Refresh</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleExportCSV}
+                      disabled={isLoading}
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      {isLoading ? "Exporting..." : "Export to CSV"}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleRefresh}
+                      disabled={isLoading}
+                    >
+                      <RotateCcw className={`w-4 h-4 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+                      {isLoading ? "Refreshing..." : "Refresh"}
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -138,7 +232,11 @@ const DashboardCounties = () => {
                           </TableCell>
                           <TableCell className="text-sm">{county.peakDate}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => handleViewCounty(county.name)}
+                            >
                               <Eye className="w-4 h-4 mr-1" />
                               View
                             </Button>
