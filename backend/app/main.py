@@ -17,7 +17,7 @@ from fastapi.exceptions import RequestValidationError
 from app.config import settings
 
 # Import routers (we'll create these next)
-from app.routers import health, diseases, counties, predictions, ml
+from app.routers import health, diseases, counties, predictions, ml, chat
 
 # Import core modules for SDLC improvements
 from app.core.middleware import (
@@ -106,6 +106,7 @@ app.include_router(diseases.router, prefix="/api/v1/diseases", tags=["Diseases"]
 app.include_router(counties.router, prefix="/api/v1/counties", tags=["Counties"])
 app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["Predictions"])
 app.include_router(ml.router, prefix="/api/v1/ml", tags=["Machine Learning"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["AI Chat"])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 🎓 LEARNING: Root Endpoint

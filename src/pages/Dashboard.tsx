@@ -3,6 +3,7 @@ import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatCards } from "@/components/dashboard/StatCards";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 
 const Dashboard = () => {
   return (
@@ -27,8 +28,12 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
+
+      {/* AI Chat Widget */}
+      <ChatInterface />
     </SidebarProvider>
   );
 };
 
 export default Dashboard;
+

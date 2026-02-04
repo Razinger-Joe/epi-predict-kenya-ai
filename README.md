@@ -17,6 +17,30 @@
 
 ---
 
+## Why This Matters (Executive Summary)
+
+**The Problem:** Currently, the healthcare response to disease outbreaks in Kenya is often **reactionary**. Hospitals and counties deal with outbreaks *after* they happen, leading to overwhelmed facilities, medication shortages, and preventable loss of life.
+
+**The Pain Points:**
+- 📉 **Delayed Data**: Paper records take weeks to aggregate.
+- 🏥 **Overwhelmed Hospitals**: Sudden patient surges catch facilities off guard.
+- 💊 **Supply Chain Gaps**: Pharmacies run out of critical meds during peak demand.
+
+**The Solution:** EpiPredict Kenya AI flips the script from *reaction* to *prediction*. By analyzing patterns in real-time, we give decision-makers a **2-week head start** to mobilize resources, stock medicines, and warn communities.
+
+---
+
+## How It Works (Simplified)
+
+We built this platform to be powerful yet easy to use on any device.
+
+- **The Brain (AI Engine)**: Uses historical data and current trends to spot outbreaks before they spread.
+- **The Vault (Supabase)**: A secure, cloud-based locker that keeps all patient and health data safe and private.
+- **The Face (React & Mobile)**: A fast, app-like interface that works perfectly on low-cost smartphones and tablets used by field workers.
+- **The Guard (Security)**: Advanced encryption ensures that only authorized health officials can see sensitive data.
+
+---
+
 ## Overview
 
 EpiPredict Kenya AI is a disease surveillance platform designed for Kenyan healthcare organizations. It helps hospitals, pharmacies, and county health departments predict disease outbreaks **14-21 days in advance** with high accuracy, enabling proactive public health responses.
@@ -59,6 +83,7 @@ The dashboard provides:
 
 ## Tech Stack
 
+### Frontend
 | Category | Technology |
 |----------|------------|
 | **Framework** | React 18 |
@@ -69,8 +94,24 @@ The dashboard provides:
 | **State** | TanStack Query (React Query) |
 | **Routing** | React Router DOM v6 |
 | **Forms** | React Hook Form + Zod |
-| **Charts** | Recharts |
+| **Charts** | Recharts (Area, Pie, Bar, Line, Radar) |
 | **Icons** | Lucide React |
+
+### Backend & ML
+| Category | Technology |
+|----------|------------|
+| **API Framework** | FastAPI (Python 3.11) |
+| **Database** | Supabase (PostgreSQL + Auth) |
+| **ML Model** | Scikit-learn (Gaussian Naive Bayes) |
+| **LLM Engine** | Ollama (Qwen 7B - Local) |
+| **Voice TTS** | ElevenLabs API |
+| **Security** | Row Level Security (RLS) + JWT |
+
+### ML Features
+- 🧠 **Outbreak Prediction**: 8-feature Naive Bayes classifier
+- 📊 **Risk Assessment**: Temperature, humidity, rainfall, population density, water access, healthcare coverage, previous cases, vaccination rate
+- 🤖 **AI Chatbot (EpiBot)**: Local LLM with voice synthesis
+- 📱 **Social Media Signals**: Early warning from community reports (simulated)
 
 ---
 
@@ -195,7 +236,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Built with [Lovable.dev](https://lovable.dev)
+- Built by the EpiPredict Kenya Team
 - UI components from [shadcn/ui](https://ui.shadcn.com/)
 - Icons from [Lucide](https://lucide.dev/)
 

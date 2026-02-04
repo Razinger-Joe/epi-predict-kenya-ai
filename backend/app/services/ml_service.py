@@ -49,8 +49,8 @@ class MLModelManager:
         self.scalers: Dict[str, StandardScaler] = {}
         self.model_metadata: Dict[str, dict] = {}
         
-        # Load any existing models
-        self._load_all_models()
+        # Load metadata only (lazy load models)
+        self._load_metadata()
     
     def _get_model_path(self, disease: Optional[str] = None) -> Path:
         """Get file path for model"""
@@ -67,29 +67,45 @@ class MLModelManager:
         model_name = disease if disease else "all_diseases"
         return self.models_dir / f"metadata_{model_name}.json"
     
-    def _load_all_models(self):
-        """Load all trained models from disk"""
+    def _load_metadata(self):
+        """Load metadata for all models (lightweight)"""
         try:
-            for pkl_file in self.models_dir.glob("naive_bayes_*.pkl"):
-                # Extract disease name from filename
-                disease = pkl_file.stem.replace("naive_bayes_", "").replace("all_diseases", None)
+            for meta_file in self.models_dir.glob("metadata_*.json"):
+                disease = meta_file.stem.replace("metadata_", "").replace("all_diseases", None)
                 try:
-                    self.models[disease or "all"] = joblib.load(pkl_file)
-                    scaler_path = self._get_scaler_path(disease)
-                    if scaler_path.exists():
-                        self.scalers[disease or "all"] = joblib.load(scaler_path)
-                    
-                    # Load metadata
-                    meta_path = self._get_metadata_path(disease)
-                    if meta_path.exists():
-                        with open(meta_path, 'r') as f:
-                            self.model_metadata[disease or "all"] = json.load(f)
-                    
-                    logger.info(f"Loaded model for disease: {disease}")
+                    with open(meta_file, 'r') as f:
+                        self.model_metadata[disease or "all"] = json.load(f)
+                    logger.info(f"Loaded metadata for disease: {disease}")
                 except Exception as e:
-                    logger.warning(f"Failed to load model {disease}: {e}")
+                    logger.warning(f"Failed to load metadata {disease}: {e}")
         except Exception as e:
-            logger.warning(f"No existing models found: {e}")
+            logger.warning(f"No existing metadata found: {e}")
+
+    def _get_or_load_model(self, disease_key: str):
+        """Lazy load model and scaler if not in memory"""
+        if disease_key in self.models:
+            return self.models[disease_key], self.scalers.get(disease_key)
+        
+        # Determine disease name from key
+        disease_name = None if disease_key == "all" else disease_key
+        
+        model_path = self._get_model_path(disease_name)
+        if not model_path.exists():
+            return None, None
+            
+        try:
+            model = joblib.load(model_path)
+            self.models[disease_key] = model
+            
+            scaler_path = self._get_scaler_path(disease_name)
+            if scaler_path.exists():
+                self.scalers[disease_key] = joblib.load(scaler_path)
+                
+            logger.info(f"Lazy loaded model for {disease_key}")
+            return model, self.scalers.get(disease_key)
+        except Exception as e:
+            logger.error(f"Failed to lazy load model {disease_key}: {e}")
+            return None, None
     
     def prepare_training_data(
         self,
@@ -250,15 +266,15 @@ class MLModelManager:
             # Get model for disease
             model_key = prediction_request.disease.value
             
-            if model_key not in self.models:
-                logger.warning(f"No model for {model_key}, using general model")
+            model, scaler = self._get_or_load_model(model_key)
+            
+            if not model:
+                logger.warning(f"No model for {model_key}, trying general model")
                 model_key = "all"
+                model, scaler = self._get_or_load_model(model_key)
             
-            if model_key not in self.models:
+            if not model:
                 raise ValueError(f"No trained model available for {prediction_request.disease}")
-            
-            model = self.models[model_key]
-            scaler = self.scalers.get(model_key)
             
             # Prepare features
             features = np.array([[
