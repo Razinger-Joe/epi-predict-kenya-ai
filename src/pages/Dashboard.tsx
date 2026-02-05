@@ -4,6 +4,7 @@ import { StatCards } from "@/components/dashboard/StatCards";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { DashboardBreadcrumbs } from "@/components/dashboard/DashboardBreadcrumbs";
 import { ChatInterface } from "@/components/chat/ChatInterface";
+import { InsightsHarvester } from "@/components/dashboard/InsightsHarvester";
 
 const Dashboard = () => {
   return (
@@ -14,7 +15,7 @@ const Dashboard = () => {
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
 
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 overflow-auto">
             <DashboardBreadcrumbs />
 
             <div className="mb-8">
@@ -25,6 +26,11 @@ const Dashboard = () => {
             </div>
 
             <StatCards />
+
+            {/* Social Media Insights Harvester */}
+            <div className="mt-8">
+              <InsightsHarvester />
+            </div>
           </main>
         </div>
       </div>
@@ -36,4 +42,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
