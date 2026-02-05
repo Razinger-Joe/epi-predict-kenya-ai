@@ -1,0 +1,71 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Docker Compose - EpiPredict Kenya AI Monolithic Stack
+# ═══════════════════════════════════════════════════════════════════════════════
+
+version: '3.8'
+
+services:
+  # Backend Service (FastAPI + ML)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: epipredict-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Supabase Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+
+      # Application Configuration
+      - ENVIRONMENT=production
+      - PORT=8000
+      - ALLOWED_ORIGINS=http://localhost,http://frontend
+
+      # Optional: LLM Configuration
+      - OLLAMA_URL=${OLLAMA_URL:-http://localhost:11434}
+      # Optional: Social Media APIs (Future)
+      # - TWITTER_API_KEY=${TWITTER_API_KEY}
+      # - TWITTER_API_SECRET=${TWITTER_API_SECRET}
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - epipredict-network
+
+  # Frontend Service (React + nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: epipredict-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - epipredict-network
+
+networks:
+  epipredict-network:
+    driver: bridge
+    name: epipredict-network
+
+# Optional: If you want to add volumes for persistence
+# volumes:
+#   ml-models:
+#     name: epipredict-ml-models
