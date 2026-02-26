@@ -37,7 +37,6 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedCounty, setSelectedCounty] = useState<string>('');
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -64,7 +63,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message: input,
-                    county: selectedCounty || extractCounty(input),
+                    county: extractCounty(input),
                     disease: extractDisease(input),
                     history: messages.slice(-5).map((m) => ({ role: m.role, content: m.content })),
                 }),
@@ -111,10 +110,10 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 onClick={() => setIsOpen(true)}
                 className={cn(
                     'fixed bottom-6 right-6 w-16 h-16 rounded-full z-50 flex items-center justify-center',
-                    'bg-gradient-to-br from-epi-amber to-epi-orange text-[#050A14]',
-                    'shadow-[0_8px_30px_rgba(245,158,11,0.4)]',
-                    'hover:shadow-[0_8px_40px_rgba(245,158,11,0.6)] hover:scale-105',
-                    'transition-all duration-300 animate-glow-pulse',
+                    'bg-gradient-to-br from-primary to-primary/70 text-primary-foreground',
+                    'shadow-[0_8px_30px_var(--glow-accent)]',
+                    'hover:shadow-[0_8px_40px_var(--glow-accent)] hover:scale-105',
+                    'transition-all duration-300 animate-pulse-glow',
                     className
                 )}
                 aria-label="Open AI Chat"
@@ -135,13 +134,12 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             )}
         >
             {/* ---- Header ---- */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-epi-amber/20 bg-gradient-to-r from-epi-amber/10 to-transparent">
-                {/* AI Avatar */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-transparent">
                 <div className="relative">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-epi-amber to-epi-orange flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-[#050A14]" />
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-primary-foreground" />
                     </div>
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-epi-green border-2 border-[#050A14] animate-status-pulse" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-background animate-status-pulse" />
                 </div>
                 <div className="flex-1">
                     <h4 className="font-syne text-sm font-bold text-foreground">EpiPredict AI</h4>
@@ -149,7 +147,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 </div>
                 <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 rounded-xl hover:bg-white/[0.08] transition-colors"
+                    className="p-2 rounded-xl hover:bg-[var(--hover-bg)] transition-colors"
                     aria-label="Close chat"
                 >
                     <X className="w-4 h-4 text-muted-foreground" />
@@ -171,13 +169,13 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                             className={cn(
                                 'max-w-[85%] rounded-2xl px-4 py-3 text-sm',
                                 message.role === 'user'
-                                    ? 'bg-gradient-to-br from-epi-amber to-epi-orange text-[#050A14] rounded-br-sm font-medium'
-                                    : 'epi-glass-card border-l-2 border-l-epi-amber/40 rounded-bl-sm'
+                                    ? 'bg-gradient-to-br from-primary to-primary/70 text-primary-foreground rounded-br-sm font-medium'
+                                    : 'epi-glass-card border-l-2 border-l-primary/40 rounded-bl-sm'
                             )}
                         >
                             <div className="flex items-start gap-2">
                                 {message.role === 'assistant' && (
-                                    <Bot className="w-4 h-4 mt-0.5 shrink-0 text-epi-amber" />
+                                    <Bot className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
                                 )}
                                 <div className="flex-1">
                                     <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
@@ -186,7 +184,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                                             {message.sources.map((source, j) => (
                                                 <span
                                                     key={j}
-                                                    className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/[0.06] border border-[rgba(245,158,11,0.15)] text-muted-foreground"
+                                                    className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--hover-bg)] border border-border text-muted-foreground"
                                                 >
                                                     {source}
                                                 </span>
@@ -195,7 +193,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                                     )}
                                 </div>
                                 {message.role === 'user' && (
-                                    <User className="w-4 h-4 mt-0.5 shrink-0 text-[#050A14]/70" />
+                                    <User className="w-4 h-4 mt-0.5 shrink-0 opacity-70" />
                                 )}
                             </div>
                         </div>
@@ -205,13 +203,13 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                 {/* Typing indicator */}
                 {isLoading && (
                     <div className="flex justify-start">
-                        <div className="epi-glass-card rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 border-l-2 border-l-epi-amber/40">
-                            <Bot className="w-4 h-4 text-epi-amber" />
+                        <div className="epi-glass-card rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-2 border-l-2 border-l-primary/40">
+                            <Bot className="w-4 h-4 text-primary" />
                             <div className="flex gap-1">
                                 {[0, 1, 2].map((i) => (
                                     <span
                                         key={i}
-                                        className="w-1.5 h-1.5 rounded-full bg-epi-amber"
+                                        className="w-1.5 h-1.5 rounded-full bg-primary"
                                         style={{ animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
                                     />
                                 ))}
@@ -227,7 +225,7 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
                     <button
                         key={action}
                         onClick={() => setInput(action)}
-                        className="whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full epi-glass-card text-muted-foreground hover:text-epi-amber hover:border-epi-amber/30 transition-all shrink-0"
+                        className="whitespace-nowrap px-3 py-1.5 text-xs font-medium rounded-full epi-glass-card text-muted-foreground hover:text-primary hover:border-primary/30 transition-all shrink-0"
                     >
                         {action}
                     </button>
@@ -235,24 +233,24 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
             </div>
 
             {/* ---- Input Area ---- */}
-            <div className="flex items-center gap-2 px-4 py-3 border-t border-[rgba(245,158,11,0.12)]">
+            <div className="flex items-center gap-2 px-4 py-3 border-t border-border">
                 <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyPress}
                     placeholder="Ask about disease trends in Kenya..."
                     disabled={isLoading}
-                    className="flex-1 px-4 py-2.5 text-sm bg-white/[0.04] border border-[rgba(245,158,11,0.12)] rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-epi-amber/40 focus:ring-1 focus:ring-epi-amber/20 transition-all disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 text-sm bg-[var(--hover-bg)] border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all disabled:opacity-50"
                 />
                 <button
                     onClick={sendMessage}
                     disabled={!input.trim() || isLoading}
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-epi-amber to-epi-orange text-[#050A14] flex items-center justify-center hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all disabled:opacity-40 disabled:hover:shadow-none active:scale-95"
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center hover:shadow-[0_0_20px_var(--glow-accent)] transition-all disabled:opacity-40 disabled:hover:shadow-none active:scale-95"
                 >
                     {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
                 <button
-                    className="w-10 h-10 rounded-xl border border-[rgba(245,158,11,0.12)] text-muted-foreground hover:text-epi-amber hover:border-epi-amber/30 flex items-center justify-center transition-all"
+                    className="w-10 h-10 rounded-xl border border-border text-muted-foreground hover:text-primary hover:border-primary/30 flex items-center justify-center transition-all"
                     title="Voice input (coming soon)"
                 >
                     <Mic className="w-4 h-4" />

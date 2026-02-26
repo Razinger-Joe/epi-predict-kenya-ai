@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
@@ -19,7 +19,7 @@
   <meta name="twitter:site" content="@lovable_dev" />
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#050A14" />
+  <meta name="theme-color" content="#FFFFFF" />
 
   <!-- Google Fonts: Syne (display), DM Sans (body), JetBrains Mono (data) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -27,6 +27,16 @@
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Syne:wght@400..800&display=swap"
     rel="stylesheet" />
+
+  <!-- Prevent FOUC: apply saved theme before first paint -->
+  <script>
+    (function () {
+      var t = localStorage.getItem('epipredict-theme') || 'light';
+      document.documentElement.setAttribute('data-theme', t);
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.content = t === 'dark' ? '#050A14' : '#FFFFFF';
+    })();
+  </script>
 </head>
 
 <body>

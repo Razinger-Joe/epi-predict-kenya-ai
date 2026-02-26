@@ -14,17 +14,16 @@ export function DashboardSidebar() {
   const location = useLocation();
 
   return (
-    <aside className="hidden md:flex w-[260px] flex-col epi-glass-sidebar border-l-[3px] border-l-epi-amber min-h-screen sticky top-0">
+    <aside className="hidden md:flex w-[260px] flex-col epi-glass-sidebar border-l-[3px] border-l-primary min-h-screen sticky top-0">
       {/* Logo Area */}
-      <div className="p-6 border-b border-[rgba(245,158,11,0.12)]">
+      <div className="p-6 border-b border-border">
         <Link to="/" className="flex items-center gap-3 group">
-          {/* Animated radar icon */}
           <div className="relative w-9 h-9 flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full border-2 border-epi-amber/30 animate-radar-spin" />
-            <Activity className="w-5 h-5 text-epi-amber" />
+            <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-radar-spin" />
+            <Activity className="w-5 h-5 text-primary" />
           </div>
           <span className="font-syne text-xl font-bold text-foreground tracking-tight">
-            Epi<span className="text-epi-amber">Predict</span>
+            Epi<span className="text-primary">Predict</span>
           </span>
         </Link>
       </div>
@@ -40,19 +39,18 @@ export function DashboardSidebar() {
               className={`
                 group flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 relative
                 ${isActive
-                  ? "text-epi-amber bg-epi-amber/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-white/[0.03]"
+                  ? "text-primary bg-[var(--nav-active-bg)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-[var(--hover-bg)]"
                 }
               `}
             >
-              {/* Active left accent bar */}
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-epi-amber rounded-r-full" />
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-primary rounded-r-full" />
               )}
 
               <item.icon className={`w-[18px] h-[18px] transition-all duration-200 ${isActive
-                  ? "text-epi-amber drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                  : "group-hover:rotate-[5deg]"
+                ? "text-primary drop-shadow-[0_0_6px_var(--glow-accent)]"
+                : "group-hover:rotate-[5deg]"
                 }`} />
 
               <span className="flex-1">{item.title}</span>
@@ -67,32 +65,30 @@ export function DashboardSidebar() {
         })}
       </nav>
 
-      {/* Footer — User profile + system status */}
-      <div className="p-4 border-t border-[rgba(245,158,11,0.12)] space-y-3">
-        {/* Quick links */}
+      {/* Footer */}
+      <div className="p-4 border-t border-border space-y-3">
         <Link
           to="#"
-          className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-white/[0.03] transition-all"
+          className="flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-[var(--hover-bg)] transition-all"
         >
           <HelpCircle className="w-4 h-4" />
           <span>Help & Support</span>
         </Link>
         <Link
           to="/login"
-          className="flex items-center gap-3 px-4 py-2.5 text-sm text-epi-red/80 hover:text-epi-red rounded-xl hover:bg-epi-red/5 transition-all"
+          className="flex items-center gap-3 px-4 py-2.5 text-sm text-destructive/80 hover:text-destructive rounded-xl hover:bg-destructive/5 transition-all"
         >
           <LogOut className="w-4 h-4" />
           <span>Logout</span>
         </Link>
 
         {/* User profile */}
-        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.03] border border-[rgba(245,158,11,0.08)]">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--hover-bg)] border border-border">
           <div className="relative">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-epi-amber to-epi-orange flex items-center justify-center text-xs font-bold text-[#050A14]">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-primary-foreground">
               KH
             </div>
-            {/* Green pulsing status dot */}
-            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-epi-green border-2 border-[#050A14] animate-status-pulse" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-background animate-status-pulse" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground truncate">Kenyatta National</p>

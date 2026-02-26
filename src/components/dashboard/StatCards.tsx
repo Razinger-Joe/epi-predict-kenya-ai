@@ -1,6 +1,7 @@
 import { AlertTriangle, MapPin, Brain, Activity, TrendingUp } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 
+/* Severity colors are static (consistent across themes) */
 const stats = [
   {
     title: "Active Outbreaks",
@@ -8,9 +9,8 @@ const stats = [
     change: "+2 from yesterday",
     trend: "up" as const,
     icon: AlertTriangle,
-    accentColor: "#EF4444",
-    glowClass: "glow-red",
-    bgGlow: "rgba(239, 68, 68, 0.08)",
+    accentColor: "var(--severity-critical-border)",
+    bgGlow: "var(--severity-critical-bg)",
   },
   {
     title: "Counties Monitored",
@@ -18,7 +18,6 @@ const stats = [
     change: "All 47 counties active",
     icon: MapPin,
     accentColor: "#3B82F6",
-    glowClass: "glow-blue",
     bgGlow: "rgba(59, 130, 246, 0.08)",
   },
   {
@@ -27,9 +26,8 @@ const stats = [
     change: "+8 new models run",
     trend: "up" as const,
     icon: Brain,
-    accentColor: "#F59E0B",
-    glowClass: "glow-amber",
-    bgGlow: "rgba(245, 158, 11, 0.08)",
+    accentColor: "var(--accent-primary)",
+    bgGlow: "var(--accent-light)",
   },
   {
     title: "National Risk Score",
@@ -38,7 +36,6 @@ const stats = [
     change: "Low — stable trend",
     icon: Activity,
     accentColor: "#10B981",
-    glowClass: "glow-green",
     bgGlow: "rgba(16, 185, 129, 0.08)",
   },
 ];
@@ -78,10 +75,10 @@ export function StatCards() {
       {memoizedStats.map((stat, index) => (
         <div
           key={stat.title}
-          className="epi-glass-card rounded-2xl p-5 hover:-translate-y-1 hover:border-[rgba(245,158,11,0.25)] transition-all duration-300 cursor-pointer group animate-cascade-in opacity-0"
+          className="epi-glass-card rounded-2xl p-5 hover:-translate-y-1 hover:border-[var(--card-hover-border)] transition-all duration-300 cursor-pointer group animate-cascade-in opacity-0"
           style={{
             animationDelay: `${index * 80 + 200}ms`,
-            borderTop: `2px solid ${stat.accentColor}40`,
+            borderTop: `2px solid color-mix(in srgb, ${stat.accentColor} 40%, transparent)`,
           }}
         >
           <div className="flex items-start justify-between">
@@ -103,19 +100,19 @@ export function StatCards() {
               )}
             </div>
             <div
-              className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110`}
+              className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
               style={{ background: stat.bgGlow }}
             >
               <stat.icon className="w-5 h-5" style={{ color: stat.accentColor }} />
             </div>
           </div>
-          {/* Mini sparkline placeholder bar */}
-          <div className="mt-3 h-1 rounded-full bg-white/[0.05] overflow-hidden">
+          {/* Mini sparkline bar */}
+          <div className="mt-3 h-1 rounded-full bg-[var(--sparkline-track)] overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-1000"
               style={{
                 width: `${(animatedValues[index] / stat.value) * 70 + 30}%`,
-                background: `linear-gradient(90deg, ${stat.accentColor}60, ${stat.accentColor})`,
+                background: `linear-gradient(90deg, color-mix(in srgb, ${stat.accentColor} 60%, transparent), ${stat.accentColor})`,
               }}
             />
           </div>

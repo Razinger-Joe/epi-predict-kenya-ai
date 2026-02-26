@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading"; // Assuming this exists or we use a simple div
+import { ThemeProvider } from "@/contexts/ThemeProvider";
 
 // Eager load critical pages
 import Index from "./pages/Index";
@@ -29,28 +30,30 @@ const PageLoader = () => (
 );
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/dashboard/predictions" element={<DashboardPredictions />} />
-            <Route path="/dashboard/alerts" element={<DashboardAlerts />} />
-            <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
-            <Route path="/dashboard/counties" element={<DashboardCounties />} />
-            <Route path="/dashboard/settings" element={<DashboardSettings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/predictions" element={<DashboardPredictions />} />
+              <Route path="/dashboard/alerts" element={<DashboardAlerts />} />
+              <Route path="/dashboard/analytics" element={<DashboardAnalytics />} />
+              <Route path="/dashboard/counties" element={<DashboardCounties />} />
+              <Route path="/dashboard/settings" element={<DashboardSettings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;
