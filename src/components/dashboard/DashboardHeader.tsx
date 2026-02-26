@@ -1,132 +1,78 @@
-import { Search, Bell, ChevronDown } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Search, Bell, ChevronDown, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function DashboardHeader() {
-  const [isMac, setIsMac] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    setIsMac(navigator.platform.toUpperCase().indexOf("MAC") >= 0);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
+  const formattedDate = currentTime.toLocaleDateString("en-KE", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  const formattedTime = currentTime.toLocaleTimeString("en-KE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
   return (
-    <header className="border-b border-border bg-card sticky top-0 z-10">
-      <div className="flex items-center gap-4 px-6 py-4">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center">
-              <SidebarTrigger className="hover:bg-accent hover:text-accent-foreground" />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            <p>Toggle Sidebar</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Search Bar */}
-        <div className="flex-1 max-w-md relative">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search diseases, counties..."
-                  className="pl-10"
-                  aria-label="Search across the platform"
-                />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-                  <span className="text-xs">{isMac ? "⌘" : "Ctrl"}</span>K
-                </kbd>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p>Search {isMac ? "⌘" : "Ctrl"} + K</p>
-            </TooltipContent>
-          </Tooltip>
+    <header className="sticky top-0 z-30 epi-glass-card border-b border-[rgba(245,158,11,0.12)]">
+      <div className="flex items-center gap-4 px-6 py-3">
+        {/* Left — Page title */}
+        <div className="flex-1 min-w-0">
+          <h2 className="font-syne text-lg font-bold text-foreground truncate">
+            Disease Intelligence
+          </h2>
+          <p className="text-xs text-muted-foreground">Biosurveillance Command Center</p>
         </div>
 
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-3">
-          {/* Notifications */}
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="relative" aria-label="View notifications">
-                    <Bell className="w-5 h-5" />
-                    <Badge className="absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center p-0 bg-destructive text-destructive-foreground text-xs">
-                      3
-                    </Badge>
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>3 New Notifications</p>
-              </TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-80 bg-popover">
-              <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">High risk alert: Nairobi</p>
-                  <p className="text-xs text-muted-foreground">Malaria cases rising rapidly</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Prediction updated</p>
-                  <p className="text-xs text-muted-foreground">Kisumu dengue forecast available</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">System maintenance</p>
-                  <p className="text-xs text-muted-foreground">Scheduled for tonight at 2 AM</p>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="gap-2 px-2" aria-label="User account menu">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">KH</AvatarFallback>
-                </Avatar>
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-popover">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer">Profile Settings</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Organization Settings</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive">Logout</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* Center — Live Outbreak Status Pill */}
+        <div className="hidden lg:flex items-center gap-2 px-4 py-1.5 rounded-full bg-epi-green/10 border border-epi-green/30">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-epi-green opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-epi-green" />
+          </span>
+          <span className="text-xs font-medium text-epi-green">Kenya Risk: Normal</span>
+          <Shield className="w-3 h-3 text-epi-green" />
         </div>
+
+        {/* Search */}
+        <div className="hidden md:flex relative max-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            placeholder="Search..."
+            className="w-full pl-9 pr-3 py-2 text-sm bg-white/[0.04] border border-[rgba(245,158,11,0.12)] rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-epi-amber/40 focus:ring-1 focus:ring-epi-amber/20 transition-all"
+          />
+        </div>
+
+        {/* Date/time — monospace */}
+        <div className="hidden xl:block text-right">
+          <p className="font-mono text-xs text-muted-foreground">{formattedDate}</p>
+          <p className="font-mono text-sm font-semibold text-epi-amber tracking-wider">{formattedTime}</p>
+        </div>
+
+        {/* Notification bell */}
+        <button className="relative p-2 rounded-xl hover:bg-white/[0.05] transition-colors" aria-label="Notifications">
+          <Bell className="w-5 h-5 text-muted-foreground" />
+          <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-epi-red text-[9px] font-mono font-bold text-white flex items-center justify-center leading-none">
+            3
+          </span>
+        </button>
+
+        {/* User Avatar */}
+        <button className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-white/[0.05] transition-colors">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-epi-amber to-epi-orange flex items-center justify-center text-xs font-bold text-[#050A14]">
+            KH
+          </div>
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
+        </button>
       </div>
     </header>
   );
