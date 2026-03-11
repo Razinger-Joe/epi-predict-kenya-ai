@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const organizationTypes = [
   "Hospital",
@@ -15,77 +17,71 @@ const organizationTypes = [
 ];
 
 const kenyanCounties = [
-  "Baringo",
-  "Bomet",
-  "Bungoma",
-  "Busia",
-  "Elgeyo-Marakwet",
-  "Embu",
-  "Garissa",
-  "Homa Bay",
-  "Isiolo",
-  "Kajiado",
-  "Kakamega",
-  "Kericho",
-  "Kiambu",
-  "Kilifi",
-  "Kirinyaga",
-  "Kisii",
-  "Kisumu",
-  "Kitui",
-  "Kwale",
-  "Laikipia",
-  "Lamu",
-  "Machakos",
-  "Makueni",
-  "Mandera",
-  "Marsabit",
-  "Meru",
-  "Migori",
-  "Mombasa",
-  "Murang'a",
-  "Nairobi",
-  "Nakuru",
-  "Nandi",
-  "Narok",
-  "Nyamira",
-  "Nyandarua",
-  "Nyeri",
-  "Samburu",
-  "Siaya",
-  "Taita-Taveta",
-  "Tana River",
-  "Tharaka-Nithi",
-  "Trans-Nzoia",
-  "Turkana",
-  "Uasin Gishu",
-  "Vihiga",
-  "Wajir",
-  "West Pokot",
+  "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu",
+  "Garissa", "Homa Bay", "Isiolo", "Kajiado", "Kakamega", "Kericho",
+  "Kiambu", "Kilifi", "Kirinyaga", "Kisii", "Kisumu", "Kitui", "Kwale",
+  "Laikipia", "Lamu", "Machakos", "Makueni", "Mandera", "Marsabit",
+  "Meru", "Migori", "Mombasa", "Murang'a", "Nairobi", "Nakuru", "Nandi",
+  "Narok", "Nyamira", "Nyandarua", "Nyeri", "Samburu", "Siaya",
+  "Taita-Taveta", "Tana River", "Tharaka-Nithi", "Trans-Nzoia", "Turkana",
+  "Uasin Gishu", "Vihiga", "Wajir", "West Pokot",
 ];
 
 const Signup = () => {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { signUp } = useAuth();
+  const { toast } = useToast();
+
+  // Form fields
+  const [orgName, setOrgName] = useState("");
+  const [orgType, setOrgType] = useState("");
+  const [county, setCounty] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const password = e.target.value;
+    const pwd = e.target.value;
+    setPassword(pwd);
     let strength = 0;
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    if (pwd.length >= 8) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
     setPasswordStrength(strength);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step < 3) {
       setStep(step + 1);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await signUp(email, password, {
+      full_name: fullName,
+      phone,
+      org_name: orgName,
+      org_type: orgType,
+      county,
+    });
+
+    if (error) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "Could not create account",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
     } else {
-      navigate("/dashboard");
+      toast({ title: "Account created!", description: "Check your email to confirm, then sign in." });
+      navigate("/login");
     }
   };
 
@@ -122,12 +118,12 @@ const Signup = () => {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="org-name">Organization Name *</Label>
-                  <Input id="org-name" placeholder="Kenyatta National Hospital" required />
+                  <Input id="org-name" placeholder="Kenyatta National Hospital" value={orgName} onChange={(e) => setOrgName(e.target.value)} required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="org-type">Organization Type *</Label>
-                  <Select required>
+                  <Select required value={county} onValueChange={setCounty}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
@@ -165,17 +161,17 @@ const Signup = () => {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="full-name">Full Name *</Label>
-                  <Input id="full-name" placeholder="Dr. John Doe" required />
+                  <Input id="full-name" placeholder="Dr. John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email *</Label>
-                  <Input id="email" type="email" placeholder="john.doe@hospital.co.ke" required />
+                  <Input id="email" type="email" placeholder="john.doe@hospital.co.ke" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number *</Label>
-                  <Input id="phone" type="tel" placeholder="+254 712 345 678" required />
+                  <Input id="phone" type="tel" placeholder="+254 712 345 678" value={phone} onChange={(e) => setPhone(e.target.value)} required />
                 </div>
 
                 <div className="space-y-2">
@@ -257,9 +253,10 @@ const Signup = () => {
                   Back
                 </Button>
               )}
-              <Button type="submit" className="flex-1">
-                {step === 3 ? "Create Account" : "Continue"}
-                {step < 3 && <ChevronRight className="w-4 h-4 ml-2" />}
+              <Button type="submit" className="flex-1" disabled={step === 3 && isSubmitting}>
+                {step === 3 && isSubmitting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Creating…</>
+                ) : step === 3 ? "Create Account" : (<>Continue<ChevronRight className="w-4 h-4 ml-2" /></>)}
               </Button>
             </div>
 

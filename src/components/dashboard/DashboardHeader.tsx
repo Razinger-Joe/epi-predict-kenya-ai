@@ -1,12 +1,17 @@
-import { Search, Bell, ChevronDown, Shield, Sun, Moon, Menu } from "lucide-react";
+import { Search, Bell, ChevronDown, Shield, Sun, Moon, Menu, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeProvider";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { MobileDrawer } from "@/components/dashboard/DashboardSidebar";
 
 export function DashboardHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -26,11 +31,22 @@ export function DashboardHeader() {
     hour12: false,
   });
 
+  // Derive user initials from metadata or email
+  const fullName = user?.user_metadata?.full_name as string | undefined;
+  const initials = fullName
+    ? fullName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+    : (user?.email?.slice(0, 2).toUpperCase() ?? "EP");
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   return (
     <>
       <header className="sticky top-0 z-30 epi-glass-card border-b border-border">
         <div className="flex items-center gap-4 px-4 md:px-6 py-3">
-          {/* Mobile hamburger — 48px touch target */}
+          {/* Mobile hamburger */}
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="md:hidden p-3 -ml-2 rounded-xl hover:bg-[var(--hover-bg)] transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
@@ -66,13 +82,13 @@ export function DashboardHeader() {
             />
           </div>
 
-          {/* Date/time — monospace */}
+          {/* Date/time */}
           <div className="hidden xl:block text-right">
             <p className="font-mono text-xs text-muted-foreground">{formattedDate}</p>
             <p className="font-mono text-sm font-semibold text-primary tracking-wider">{formattedTime}</p>
           </div>
 
-          {/* Theme toggle button */}
+          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             className="p-2 rounded-xl border border-border bg-card hover:bg-[var(--hover-bg)] transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -97,17 +113,38 @@ export function DashboardHeader() {
             </span>
           </button>
 
-          {/* User Avatar */}
-          <button className="hidden sm:flex items-center gap-2 p-1.5 rounded-xl hover:bg-[var(--hover-bg)] transition-colors">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-primary-foreground">
-              KH
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
-          </button>
+          {/* User Avatar + Dropdown */}
+          <div className="relative hidden sm:block">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-[var(--hover-bg)] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-xs font-bold text-primary-foreground">
+                {initials}
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
+            </button>
+
+            {showUserMenu && (
+              <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-lg z-50">
+                <div className="px-4 py-3 border-b border-border">
+                  <p className="text-sm font-medium text-foreground truncate">{fullName || "Health Officer"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user?.email || "—"}</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors rounded-b-xl"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* Mobile drawer — rendered here so state is co-located */}
+      {/* Mobile drawer */}
       <MobileDrawer isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
     </>
   );

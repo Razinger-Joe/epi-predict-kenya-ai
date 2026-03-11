@@ -3,16 +3,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Eye, EyeOff, Mail, Lock, Activity } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Mail, Lock, Activity, Loader2 } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn } = useAuth();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Redirect back to where the user was trying to go, or default to /dashboard
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/dashboard";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setIsSubmitting(true);
+
+    const { error } = await signIn(email, password);
+
+    if (error) {
+      toast({
+        title: "Sign in failed",
+        description: error.message || "Invalid email or password",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    } else {
+      toast({ title: "Welcome back!", description: "Signed in successfully" });
+      navigate(from, { replace: true });
+    }
   };
 
   return (
@@ -39,6 +64,8 @@ const Login = () => {
                   type="email"
                   placeholder="your@email.com"
                   className="pl-10"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
@@ -53,6 +80,8 @@ const Login = () => {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="pl-10 pr-10"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
@@ -74,8 +103,12 @@ const Login = () => {
               <a href="#" className="text-sm text-primary hover:underline">Forgot password?</a>
             </div>
 
-            <Button type="submit" className="w-full" size="lg">
-              Sign in
+            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Signing in…</>
+              ) : (
+                "Sign in"
+              )}
             </Button>
 
             <div className="relative">
@@ -128,7 +161,7 @@ const Login = () => {
               <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center flex-shrink-0 mt-1">
                 <span className="text-primary-foreground text-sm">✓</span>
               </div>
-              <span>Smart alerts & AI-powered recommendations</span>
+              <span>Smart alerts &amp; AI-powered recommendations</span>
             </li>
           </ul>
         </div>
@@ -138,3 +171,4 @@ const Login = () => {
 };
 
 export default Login;
+

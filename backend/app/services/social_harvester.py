@@ -234,3 +234,62 @@ async def get_analysis_status(insight_id: str) -> dict:
 def get_featured_counties() -> List[dict]:
     """Return the list of 10 featured counties."""
     return FEATURED_COUNTIES
+
+
+class SocialHarvester:
+    """Class wrapper for social media signal harvesting."""
+
+    def get_signals(
+        self,
+        county: Optional[str] = None,
+        disease: Optional[str] = None,
+        limit: int = 20,
+    ) -> list:
+        """Return structured social signals, optionally filtered."""
+        from app.models.social import SocialSignal, SentimentEnum
+
+        signals = []
+        sentiments = list(SentimentEnum)
+        signal_types = ["tweet", "community_report", "news_article"]
+        sources = ["Twitter/X", "Facebook Health Groups", "Community Reports"]
+
+        count = min(limit, random.randint(5, 15))
+        for _ in range(count):
+            c = county or random.choice(FEATURED_COUNTIES)["name"]
+            d = disease or random.choice(list(DISEASE_KEYWORDS.keys()))
+            signal = SocialSignal(
+                id=str(uuid4()),
+                signal_type=random.choice(signal_types),
+                content=generate_mock_content(d, c),
+                sentiment=random.choice(sentiments),
+                location=c,
+                disease_mentioned=d,
+                source=random.choice(sources),
+                timestamp=datetime.utcnow() - timedelta(hours=random.randint(0, 72)),
+                engagement_score=round(random.uniform(0, 1), 2),
+            )
+            signals.append(signal)
+        return signals
+
+    def get_aggregate_sentiment(self, signals: list):
+        """Calculate aggregate sentiment from a list of signals."""
+        from app.models.social import SentimentScore, SentimentEnum
+
+        if not signals:
+            return SentimentScore()
+
+        counts = {"positive": 0, "negative": 0, "neutral": 0, "urgent": 0}
+        for s in signals:
+            val = s.sentiment.value if hasattr(s.sentiment, "value") else str(s.sentiment)
+            counts[val] = counts.get(val, 0) + 1
+
+        total = len(signals)
+        score = SentimentScore(
+            positive=round(counts["positive"] / total, 2),
+            negative=round(counts["negative"] / total, 2),
+            neutral=round(counts["neutral"] / total, 2),
+            urgent=round(counts["urgent"] / total, 2),
+            overall_label=SentimentEnum(max(counts, key=counts.get)),
+        )
+        return score
+

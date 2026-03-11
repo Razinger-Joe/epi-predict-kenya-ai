@@ -10,7 +10,9 @@ import {
   LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, RadarChart,
   PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
-import { TrendingUp, TrendingDown, AlertTriangle, Activity, MapPin, Users, Droplets, ThermometerSun } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Activity, MapPin, Users, Droplets, ThermometerSun, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportElementToPdf } from "@/services/exportService";
 
 // Disease trends data (COVID removed)
 const diseaseData = [
@@ -98,235 +100,248 @@ const DashboardAnalytics = () => {
 
           <main className="flex-1 p-6 overflow-auto">
             <DashboardBreadcrumbs />
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
-              <p className="text-muted-foreground mt-1">
-                Disease surveillance insights powered by ML predictions
-              </p>
+            <div className="mb-8 flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground">Analytics Dashboard</h1>
+                <p className="text-muted-foreground mt-1">
+                  Disease surveillance insights powered by ML predictions
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => exportElementToPdf("analytics-content", "EpiPredict_Analytics.pdf")}
+                className="hidden md:flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Export Report
+              </Button>
             </div>
 
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <StatCard
-                title="Active Outbreaks"
-                value="12"
-                change="+3 this week"
-                icon={AlertTriangle}
-                trend="up"
-                color="bg-orange-500"
-              />
-              <StatCard
-                title="Counties at Risk"
-                value="18"
-                change="-2 from last week"
-                icon={MapPin}
-                trend="down"
-                color="bg-blue-500"
-              />
-              <StatCard
-                title="Cases This Month"
-                value="1,724"
-                change="+12% vs last month"
-                icon={Users}
-                trend="up"
-                color="bg-red-500"
-              />
-              <StatCard
-                title="ML Accuracy"
-                value="91%"
-                change="+6% improvement"
-                icon={Activity}
-                trend="down"
-                color="bg-green-500"
-              />
-            </div>
+            <div id="analytics-content">
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Disease Trends - Area Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-primary" />
-                    Disease Trends
-                  </CardTitle>
-                  <CardDescription>Weekly case progression across Kenya</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={diseaseData}>
-                      <defs>
-                        <linearGradient id="colorMalaria" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#F97316" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorCholera" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
-                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Area type="monotone" dataKey="Malaria" stroke="#F97316" fillOpacity={1} fill="url(#colorMalaria)" />
-                      <Area type="monotone" dataKey="Cholera" stroke="#3B82F6" fillOpacity={1} fill="url(#colorCholera)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+              {/* Key Metrics */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <StatCard
+                  title="Active Outbreaks"
+                  value="12"
+                  change="+3 this week"
+                  icon={AlertTriangle}
+                  trend="up"
+                  color="bg-orange-500"
+                />
+                <StatCard
+                  title="Counties at Risk"
+                  value="18"
+                  change="-2 from last week"
+                  icon={MapPin}
+                  trend="down"
+                  color="bg-blue-500"
+                />
+                <StatCard
+                  title="Cases This Month"
+                  value="1,724"
+                  change="+12% vs last month"
+                  icon={Users}
+                  trend="up"
+                  color="bg-red-500"
+                />
+                <StatCard
+                  title="ML Accuracy"
+                  value="91%"
+                  change="+6% improvement"
+                  icon={Activity}
+                  trend="down"
+                  color="bg-green-500"
+                />
+              </div>
 
-              {/* Disease Distribution - Pie Chart */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Droplets className="h-5 w-5 text-primary" />
-                    Disease Distribution
-                  </CardTitle>
-                  <CardDescription>Total case breakdown by disease type</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={diseaseDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {diseaseDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Disease Trends - Area Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-primary" />
+                      Disease Trends
+                    </CardTitle>
+                    <CardDescription>Weekly case progression across Kenya</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <AreaChart data={diseaseData}>
+                        <defs>
+                          <linearGradient id="colorMalaria" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#F97316" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#F97316" stopOpacity={0} />
+                          </linearGradient>
+                          <linearGradient id="colorCholera" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Area type="monotone" dataKey="Malaria" stroke="#F97316" fillOpacity={1} fill="url(#colorMalaria)" />
+                        <Area type="monotone" dataKey="Cholera" stroke="#3B82F6" fillOpacity={1} fill="url(#colorCholera)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              {/* Regional Risk Analysis */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    Regional Risk Analysis
-                  </CardTitle>
-                  <CardDescription>Outbreak risk levels by region</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={regionalData} layout="vertical">
-                      <XAxis type="number" domain={[0, 100]} />
-                      <YAxis dataKey="region" type="category" width={100} />
-                      <Tooltip />
-                      <Bar dataKey="risk" fill="#3B82F6" radius={[0, 4, 4, 0]}>
-                        {regionalData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.risk > 70 ? '#EF4444' : entry.risk > 50 ? '#F97316' : '#22C55E'}
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                {/* Disease Distribution - Pie Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Droplets className="h-5 w-5 text-primary" />
+                      Disease Distribution
+                    </CardTitle>
+                    <CardDescription>Total case breakdown by disease type</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={diseaseDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        >
+                          {diseaseDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* ML Model Performance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5 text-primary" />
-                    ML Prediction Accuracy
-                  </CardTitle>
-                  <CardDescription>Model performance over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={predictionAccuracy}>
-                      <XAxis dataKey="month" />
-                      <YAxis domain={[60, 100]} />
-                      <Tooltip />
-                      <Line
-                        type="monotone"
-                        dataKey="accuracy"
-                        stroke="#10B981"
-                        strokeWidth={3}
-                        dot={{ fill: '#10B981', strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Regional Risk Analysis */}
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      Regional Risk Analysis
+                    </CardTitle>
+                    <CardDescription>Outbreak risk levels by region</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={regionalData} layout="vertical">
+                        <XAxis type="number" domain={[0, 100]} />
+                        <YAxis dataKey="region" type="category" width={100} />
+                        <Tooltip />
+                        <Bar dataKey="risk" fill="#3B82F6" radius={[0, 4, 4, 0]}>
+                          {regionalData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={entry.risk > 70 ? '#EF4444' : entry.risk > 50 ? '#F97316' : '#22C55E'}
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
 
-            {/* Environmental Correlation Radar */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ThermometerSun className="h-5 w-5 text-primary" />
-                    Environmental Correlations
-                  </CardTitle>
-                  <CardDescription>How environmental factors affect disease spread</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={350}>
-                    <RadarChart data={environmentalData}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="factor" />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} />
-                      <Radar name="Malaria" dataKey="malaria" stroke="#F97316" fill="#F97316" fillOpacity={0.3} />
-                      <Radar name="Cholera" dataKey="cholera" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
-                      <Radar name="Typhoid" dataKey="typhoid" stroke="#EAB308" fill="#EAB308" fillOpacity={0.3} />
-                      <Legend />
-                      <Tooltip />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                {/* ML Model Performance */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-primary" />
+                      ML Prediction Accuracy
+                    </CardTitle>
+                    <CardDescription>Model performance over time</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={predictionAccuracy}>
+                        <XAxis dataKey="month" />
+                        <YAxis domain={[60, 100]} />
+                        <Tooltip />
+                        <Line
+                          type="monotone"
+                          dataKey="accuracy"
+                          stroke="#10B981"
+                          strokeWidth={3}
+                          dot={{ fill: '#10B981', strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* Top Risk Counties */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                    High Risk Counties
-                  </CardTitle>
-                  <CardDescription>Counties requiring immediate attention</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { name: "Kisumu", risk: 85, disease: "Malaria", trend: "+12%" },
-                    { name: "Mombasa", risk: 78, disease: "Cholera", trend: "+8%" },
-                    { name: "Turkana", risk: 72, disease: "Rift Valley Fever", trend: "+15%" },
-                    { name: "Kilifi", risk: 68, disease: "Dengue", trend: "+5%" },
-                    { name: "Garissa", risk: 65, disease: "Typhoid", trend: "+10%" },
-                  ].map((county, idx) => (
-                    <div key={idx} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{county.name}</span>
-                          <Badge variant={county.risk > 75 ? "destructive" : "secondary"}>
-                            {county.disease}
-                          </Badge>
+              {/* Environmental Correlation Radar */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ThermometerSun className="h-5 w-5 text-primary" />
+                      Environmental Correlations
+                    </CardTitle>
+                    <CardDescription>How environmental factors affect disease spread</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ResponsiveContainer width="100%" height={350}>
+                      <RadarChart data={environmentalData}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="factor" />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} />
+                        <Radar name="Malaria" dataKey="malaria" stroke="#F97316" fill="#F97316" fillOpacity={0.3} />
+                        <Radar name="Cholera" dataKey="cholera" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.3} />
+                        <Radar name="Typhoid" dataKey="typhoid" stroke="#EAB308" fill="#EAB308" fillOpacity={0.3} />
+                        <Legend />
+                        <Tooltip />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Top Risk Counties */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
+                      High Risk Counties
+                    </CardTitle>
+                    <CardDescription>Counties requiring immediate attention</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {[
+                      { name: "Kisumu", risk: 85, disease: "Malaria", trend: "+12%" },
+                      { name: "Mombasa", risk: 78, disease: "Cholera", trend: "+8%" },
+                      { name: "Turkana", risk: 72, disease: "Rift Valley Fever", trend: "+15%" },
+                      { name: "Kilifi", risk: 68, disease: "Dengue", trend: "+5%" },
+                      { name: "Garissa", risk: 65, disease: "Typhoid", trend: "+10%" },
+                    ].map((county, idx) => (
+                      <div key={idx} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{county.name}</span>
+                            <Badge variant={county.risk > 75 ? "destructive" : "secondary"}>
+                              {county.disease}
+                            </Badge>
+                          </div>
+                          <span className="text-destructive text-sm font-medium">{county.trend}</span>
                         </div>
-                        <span className="text-destructive text-sm font-medium">{county.trend}</span>
+                        <Progress
+                          value={county.risk}
+                          className={`h-2 ${county.risk > 75 ? '[&>div]:bg-destructive' : '[&>div]:bg-orange-500'}`}
+                        />
                       </div>
-                      <Progress
-                        value={county.risk}
-                        className={`h-2 ${county.risk > 75 ? '[&>div]:bg-destructive' : '[&>div]:bg-orange-500'}`}
-                      />
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>  {/* end #analytics-content */}
           </main>
         </div>
       </div>

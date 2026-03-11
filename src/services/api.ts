@@ -24,8 +24,19 @@ async function fetchAPI<T>(
 ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
 
+    // Inject auth token from Supabase session (stored in localStorage)
+    let authToken = "";
+    try {
+        const stored = localStorage.getItem("sb-" + (import.meta.env.VITE_SUPABASE_URL?.split("//")[1]?.split(".")[0] || "") + "-auth-token");
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            authToken = parsed?.access_token || "";
+        }
+    } catch { /* no token available */ }
+
     const defaultHeaders: HeadersInit = {
         'Content-Type': 'application/json',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {}),
     };
 
     const response = await fetch(url, {
