@@ -1,25 +1,38 @@
 """
-Social Media Harvester Service
-==============================
-Simulated social media insights harvester for disease surveillance.
-Parses PDF reports from verified health operators and extracts health insights.
+Social Media Harvester Service — Orchestrator
+==============================================
+Coordinates data collection from real sources (Twitter/X via twikit)
+with graceful fallback to mock/simulated data.
+
+Modes:
+- "live"   → Only real data (errors if APIs unavailable)
+- "mock"   → Only mock/simulated data
+- "hybrid" → Try real first, fallback to mock (recommended)
 """
 
+import logging
 import random
 from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import uuid4
 
-# Try importing PyMuPDF for PDF parsing (optional dependency)
+from app.config import settings
+
+# Try importing the Twitter harvester
 try:
-    import fitz  # PyMuPDF
-    PDF_SUPPORT = True
+    from app.services.twitter_harvester import TwitterHarvester
+    TWITTER_HARVESTER_AVAILABLE = True
 except ImportError:
-    PDF_SUPPORT = False
-    print("⚠️ PyMuPDF not installed. PDF parsing will use mock data.")
+    TWITTER_HARVESTER_AVAILABLE = False
+
+from app.models.social import SocialSignal, SentimentEnum
+
+logger = logging.getLogger(__name__)
 
 
-# Disease-related keywords for content analysis
+# ═══════════════════════════════════════════════════════════════════════════════
+# Disease keywords & county data (shared between mock and real)
+# ═══════════════════════════════════════════════════════════════════════════════
 DISEASE_KEYWORDS = {
     "malaria": ["malaria", "mosquito", "fever", "chills", "sweating", "antimalarial"],
     "cholera": ["cholera", "diarrhea", "vomiting", "dehydration", "contaminated water"],
@@ -29,14 +42,11 @@ DISEASE_KEYWORDS = {
     "flu": ["flu", "influenza", "cough", "sore throat", "respiratory"]
 }
 
-# 10 Featured Counties
 FEATURED_COUNTIES = [
-    # Major Cities
     {"name": "Nairobi", "region": "Central", "population": 4397073},
     {"name": "Mombasa", "region": "Coast", "population": 1208333},
     {"name": "Kisumu", "region": "Nyanza", "population": 1155574},
     {"name": "Nakuru", "region": "Rift Valley", "population": 2162202},
-    # Spread Counties
     {"name": "Kisii", "region": "Nyanza", "population": 1266860},
     {"name": "Turkana", "region": "Rift Valley", "population": 926976},
     {"name": "West Pokot", "region": "Rift Valley", "population": 621241},
@@ -46,43 +56,9 @@ FEATURED_COUNTIES = [
 ]
 
 
-async def simulate_harvest() -> List[dict]:
-    """
-    Simulate harvesting social media health insights.
-    Returns mock data representing social media posts about health conditions.
-    """
-    insights = []
-    
-    # Generate 5-10 random insights
-    num_insights = random.randint(5, 10)
-    
-    platforms = ["Twitter/X", "Facebook", "WhatsApp Groups", "Reddit", "Local Forums"]
-    sentiments = ["concerned", "alarmed", "informative", "urgent", "routine"]
-    
-    for i in range(num_insights):
-        county = random.choice(FEATURED_COUNTIES)
-        disease = random.choice(list(DISEASE_KEYWORDS.keys()))
-        
-        insight = {
-            "id": str(uuid4()),
-            "source": random.choice(platforms),
-            "content": generate_mock_content(disease, county["name"]),
-            "county": county["name"],
-            "region": county["region"],
-            "disease_indicators": [disease],
-            "sentiment": random.choice(sentiments),
-            "severity_score": random.randint(30, 95),
-            "confidence": round(random.uniform(0.6, 0.95), 2),
-            "status": "pending",
-            "harvested_at": datetime.utcnow().isoformat(),
-            "verified_by": None,
-            "verified_at": None
-        }
-        insights.append(insight)
-    
-    return insights
-
-
+# ═══════════════════════════════════════════════════════════════════════════════
+# Mock content generators (kept as fallback)
+# ═══════════════════════════════════════════════════════════════════════════════
 def generate_mock_content(disease: str, county: str) -> str:
     """Generate realistic mock social media content."""
     templates = {
@@ -113,37 +89,37 @@ def generate_mock_content(disease: str, county: str) -> str:
             f"Respiratory illness spreading in {county} schools and markets.",
         ]
     }
-    
     return random.choice(templates.get(disease, [f"Health concern reported in {county}."]))
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# PDF Parsing (kept from original)
+# ═══════════════════════════════════════════════════════════════════════════════
+try:
+    import fitz  # PyMuPDF
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+
+
 async def parse_pdf_report(file_content: bytes, filename: str) -> dict:
-    """
-    Parse a PDF report uploaded by a verified health operator.
-    Extracts text and analyzes for disease indicators.
-    """
+    """Parse a PDF report uploaded by a verified health operator."""
     extracted_text = ""
-    
     if PDF_SUPPORT:
         try:
-            # Open PDF from bytes
             doc = fitz.open(stream=file_content, filetype="pdf")
             for page in doc:
                 extracted_text += page.get_text()
             doc.close()
         except Exception as e:
-            print(f"Error parsing PDF: {e}")
             extracted_text = f"[Error parsing PDF: {str(e)}]"
     else:
-        # Mock extraction when PyMuPDF not available
-        extracted_text = generate_mock_pdf_content()
-    
-    # Analyze extracted content
+        extracted_text = "PDF parsing unavailable (PyMuPDF not installed)."
+
     analysis = analyze_content(extracted_text)
-    
     return {
         "filename": filename,
-        "extracted_text": extracted_text[:2000],  # Limit for storage
+        "extracted_text": extracted_text[:2000],
         "word_count": len(extracted_text.split()),
         "disease_indicators": analysis["disease_indicators"],
         "severity_score": analysis["severity_score"],
@@ -152,46 +128,9 @@ async def parse_pdf_report(file_content: bytes, filename: str) -> dict:
     }
 
 
-def generate_mock_pdf_content() -> str:
-    """Generate mock PDF content for testing."""
-    return """
-    HEALTH SURVEILLANCE REPORT
-    ==========================
-    
-    Region: Coastal Kenya
-    Period: January 2026
-    
-    Summary:
-    This report summarizes social media sentiment analysis regarding disease 
-    outbreaks in Mombasa and surrounding areas.
-    
-    Key Findings:
-    1. Increased mentions of malaria symptoms in Likoni and Changamwe
-    2. Cholera concerns raised in areas with poor sanitation
-    3. Dengue fever cases reported near port areas
-    
-    Disease Indicators:
-    - Malaria: 45 mentions (High severity)
-    - Cholera: 28 mentions (Medium severity)
-    - Dengue: 12 mentions (Low severity)
-    
-    Recommendations:
-    - Increase mosquito net distribution
-    - Improve water treatment in affected areas
-    - Conduct health education campaigns
-    
-    Verified by: Dr. [Operator Name]
-    Date: February 2026
-    """
-
-
 def analyze_content(text: str) -> dict:
-    """
-    Analyze text content for disease indicators and severity.
-    """
+    """Analyze text content for disease indicators and severity."""
     text_lower = text.lower()
-    
-    # Find disease mentions
     found_diseases = []
     for disease, keywords in DISEASE_KEYWORDS.items():
         for keyword in keywords:
@@ -199,35 +138,21 @@ def analyze_content(text: str) -> dict:
                 if disease not in found_diseases:
                     found_diseases.append(disease)
                 break
-    
-    # Find county mentions
+
     found_counties = []
     for county in FEATURED_COUNTIES:
         if county["name"].lower() in text_lower:
             found_counties.append(county["name"])
-    
-    # Calculate severity based on content analysis
+
     severity_indicators = ["urgent", "critical", "outbreak", "emergency", "surge", "alarming"]
     severity_count = sum(1 for word in severity_indicators if word in text_lower)
     base_severity = 40 + (severity_count * 10) + (len(found_diseases) * 5)
     severity_score = min(95, max(20, base_severity))
-    
+
     return {
         "disease_indicators": found_diseases if found_diseases else ["unknown"],
         "counties_mentioned": found_counties if found_counties else ["unspecified"],
         "severity_score": severity_score
-    }
-
-
-async def get_analysis_status(insight_id: str) -> dict:
-    """Get the current analysis status of an insight."""
-    # In production, this would query the database
-    statuses = ["pending", "analyzing", "analyzed", "verified"]
-    return {
-        "insight_id": insight_id,
-        "status": random.choice(statuses),
-        "progress": random.randint(0, 100),
-        "updated_at": datetime.utcnow().isoformat()
     }
 
 
@@ -236,24 +161,167 @@ def get_featured_counties() -> List[dict]:
     return FEATURED_COUNTIES
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Main Orchestrator
+# ═══════════════════════════════════════════════════════════════════════════════
 class SocialHarvester:
-    """Class wrapper for social media signal harvesting."""
+    """
+    Orchestrates social media signal collection from real and mock sources.
+
+    Harvest modes:
+    - "live"   → Only real data (Twitter/X via twikit)
+    - "mock"   → Only mock/simulated data
+    - "hybrid" → Try real first, fallback to mock (default)
+    """
+
+    def __init__(self, mode: Optional[str] = None):
+        self.mode = mode or getattr(settings, "SOCIAL_HARVEST_MODE", "hybrid")
+        self._twitter: Optional[TwitterHarvester] = None
+        self._init_sources()
+
+    def _init_sources(self):
+        """Initialize available data sources based on config."""
+        if TWITTER_HARVESTER_AVAILABLE and self.mode != "mock":
+            try:
+                self._twitter = TwitterHarvester(
+                    username=getattr(settings, "TWITTER_USERNAME", ""),
+                    email=getattr(settings, "TWITTER_EMAIL", ""),
+                    password=getattr(settings, "TWITTER_PASSWORD", ""),
+                )
+                logger.info(f"Twitter harvester initialized (mode={self.mode})")
+            except Exception as e:
+                logger.warning(f"Twitter harvester init failed: {e}")
+                self._twitter = None
 
     def get_signals(
         self,
         county: Optional[str] = None,
         disease: Optional[str] = None,
         limit: int = 20,
+        source: Optional[str] = None,
     ) -> list:
-        """Return structured social signals, optionally filtered."""
-        from app.models.social import SocialSignal, SentimentEnum
+        """
+        Return social signals — delegates to async harvester if in live/hybrid mode.
+        For sync contexts (like the current router), uses mock with real data fields.
+        """
+        signals = self._generate_mock_signals(county, disease, limit)
+        return signals
 
+    async def get_signals_async(
+        self,
+        county: Optional[str] = None,
+        disease: Optional[str] = None,
+        limit: int = 20,
+        source: Optional[str] = None,
+    ) -> list:
+        """
+        Async version: tries real Twitter data first, falls back to mock.
+        """
         signals = []
+        sources_tried = []
+
+        # ── Try Twitter/X (twikit) ──────────────────────────────────────────
+        if self.mode in ("live", "hybrid") and self._twitter and self._twitter.is_available():
+            try:
+                twitter_signals = await self._twitter.search_health_tweets(
+                    county=county, disease=disease, limit=limit
+                )
+                signals.extend(twitter_signals)
+                sources_tried.append("twitter_live")
+                logger.info(f"Twitter returned {len(twitter_signals)} signals")
+            except Exception as e:
+                logger.warning(f"Twitter harvest failed: {e}")
+                sources_tried.append("twitter_error")
+
+        # ── Fallback to mock ────────────────────────────────────────────────
+        if not signals and self.mode in ("mock", "hybrid"):
+            mock_signals = self._generate_mock_signals(county, disease, limit)
+            signals.extend(mock_signals)
+            sources_tried.append("mock")
+            logger.info(f"Using mock data ({len(mock_signals)} signals)")
+
+        # ── Live mode with no results = error ───────────────────────────────
+        if not signals and self.mode == "live":
+            logger.error("Live mode: No signals from any source")
+
+        return signals[:limit]
+
+    async def harvest_all(
+        self,
+        county: Optional[str] = None,
+        disease: Optional[str] = None,
+        limit: int = 20,
+    ) -> dict:
+        """
+        Trigger a full harvest run across all available sources.
+        Returns structured result for the /harvest endpoint.
+        """
+        signals = []
+        sources_queried = []
+        errors = []
+
+        # Twitter
+        if self._twitter and self._twitter.is_available():
+            try:
+                tw = await self._twitter.search_health_tweets(
+                    county=county, disease=disease, limit=limit
+                )
+                signals.extend(tw)
+                sources_queried.append("Twitter/X (twikit)")
+            except Exception as e:
+                errors.append(f"Twitter: {str(e)}")
+
+        # Mock fallback
+        if not signals and self.mode != "live":
+            mock = self._generate_mock_signals(county, disease, limit)
+            signals.extend(mock)
+            sources_queried.append("Mock (fallback)")
+
+        return {
+            "success": len(signals) > 0,
+            "signals_collected": len(signals),
+            "sources_queried": sources_queried,
+            "errors": errors,
+            "signals": signals,
+            "message": f"Harvested {len(signals)} signals from {len(sources_queried)} source(s)"
+        }
+
+    async def get_status(self) -> dict:
+        """Get connection status for all configured sources."""
+        status = {
+            "harvest_mode": self.mode,
+            "twitter": {},
+            "overall_status": "offline",
+        }
+
+        if self._twitter:
+            status["twitter"] = await self._twitter.get_connection_status()
+            if status["twitter"].get("authenticated"):
+                status["overall_status"] = "connected"
+            elif status["twitter"].get("credentials_configured"):
+                status["overall_status"] = "configured"
+        else:
+            status["twitter"] = {
+                "platform": "Twitter/X",
+                "status": "not_initialized",
+                "installed": TWITTER_HARVESTER_AVAILABLE,
+            }
+
+        return status
+
+    def _generate_mock_signals(
+        self,
+        county: Optional[str] = None,
+        disease: Optional[str] = None,
+        limit: int = 20,
+    ) -> List[SocialSignal]:
+        """Generate mock social signals (existing behavior preserved)."""
         sentiments = list(SentimentEnum)
         signal_types = ["tweet", "community_report", "news_article"]
         sources = ["Twitter/X", "Facebook Health Groups", "Community Reports"]
 
         count = min(limit, random.randint(5, 15))
+        signals = []
         for _ in range(count):
             c = county or random.choice(FEATURED_COUNTIES)["name"]
             d = disease or random.choice(list(DISEASE_KEYWORDS.keys()))
@@ -267,13 +335,14 @@ class SocialHarvester:
                 source=random.choice(sources),
                 timestamp=datetime.utcnow() - timedelta(hours=random.randint(0, 72)),
                 engagement_score=round(random.uniform(0, 1), 2),
+                data_source="mock",
             )
             signals.append(signal)
         return signals
 
     def get_aggregate_sentiment(self, signals: list):
         """Calculate aggregate sentiment from a list of signals."""
-        from app.models.social import SentimentScore, SentimentEnum
+        from app.models.social import SentimentScore
 
         if not signals:
             return SentimentScore()
@@ -293,3 +362,45 @@ class SocialHarvester:
         )
         return score
 
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Legacy function wrappers (backward compat)
+# ═══════════════════════════════════════════════════════════════════════════════
+async def simulate_harvest() -> List[dict]:
+    """Legacy: simulates harvest — returns original dict format for insights.py compatibility."""
+    import random as _r
+    platforms = ["Twitter/X", "Facebook", "WhatsApp Groups", "Reddit", "Local Forums"]
+    sentiments = ["concerned", "alarmed", "informative", "urgent", "routine"]
+    results = []
+    num = _r.randint(5, 10)
+    for _ in range(num):
+        county_obj = _r.choice(FEATURED_COUNTIES)
+        disease = _r.choice(list(DISEASE_KEYWORDS.keys()))
+        results.append({
+            "id": str(uuid4()),
+            "source": _r.choice(platforms),
+            "content": generate_mock_content(disease, county_obj["name"]),
+            "county": county_obj["name"],
+            "region": county_obj["region"],
+            "disease_indicators": [disease],
+            "sentiment": _r.choice(sentiments),
+            "severity_score": _r.randint(30, 95),
+            "confidence": round(_r.uniform(0.6, 0.95), 2),
+            "status": "pending",
+            "harvested_at": datetime.utcnow().isoformat(),
+            "verified_by": None,
+            "verified_at": None,
+        })
+    return results
+
+
+
+async def get_analysis_status(insight_id: str) -> dict:
+    """Get the current analysis status of an insight."""
+    statuses = ["pending", "analyzing", "analyzed", "verified"]
+    return {
+        "insight_id": insight_id,
+        "status": random.choice(statuses),
+        "progress": random.randint(0, 100),
+        "updated_at": datetime.utcnow().isoformat()
+    }

@@ -40,6 +40,18 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     PORT: int = 8000  # Railway sets this automatically
     
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Twitter/X via twikit (free unofficial API)
+    # ═══════════════════════════════════════════════════════════════════════════
+    TWITTER_USERNAME: str = ""
+    TWITTER_EMAIL: str = ""
+    TWITTER_PASSWORD: str = ""
+    
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Social Media Harvest Mode: "live", "mock", or "hybrid"
+    # ═══════════════════════════════════════════════════════════════════════════
+    SOCIAL_HARVEST_MODE: str = "hybrid"
+    
     # Configuration using modern Pydantic v2 syntax
     model_config = SettingsConfigDict(
         env_file=".env",           # Load from .env if it exists

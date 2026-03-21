@@ -58,3 +58,10 @@ PyMuPDF>=1.23.0               # PDF text extraction for health reports
 # ═══════════════════════════════════════════════════════════════════════════════
 pytest==8.0.0                 # Testing framework
 httpx==0.26.0                 # Test client requests
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Social Media Data Collection
+# ═══════════════════════════════════════════════════════════════════════════════
+twikit>=2.0.0                  # Twitter/X data harvesting (free, unofficial)
+aiohttp>=3.9.0                 # Async HTTP for parallel harvesting
+
