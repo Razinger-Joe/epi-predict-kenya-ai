@@ -32,7 +32,10 @@ class SocialSignal(BaseModel):
     author_handle: Optional[str] = None     # @username (for attribution)
     url: Optional[str] = None               # Link to original post
     is_verified_source: bool = False         # From verified health account
-    data_source: str = "mock"               # "twitter_live", "mock"
+    data_source: str = "mock"               # "twitter_live", "facebook_live", "grok_live", "mock"
+
+    # ── AI classification (added by Grok analyzer) ───────────────────────
+    ai_classification: Optional[dict] = None  # Severity, confidence, notes from Grok xAI
 
 
 class SentimentScore(BaseModel):
@@ -56,6 +59,8 @@ class SocialSignalResponse(BaseModel):
 class HarvestStatusResponse(BaseModel):
     """Response model for the /social/status endpoint."""
     twitter: dict = {}
+    facebook: dict = {}
+    grok: dict = {}
     harvest_mode: str = "mock"
     overall_status: str = "offline"
 

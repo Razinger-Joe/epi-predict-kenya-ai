@@ -66,6 +66,8 @@ async def get_harvest_status():
 
     return HarvestStatusResponse(
         twitter=status.get("twitter", {}),
+        facebook=status.get("facebook", {}),
+        grok=status.get("grok", {}),
         harvest_mode=status.get("harvest_mode", "mock"),
         overall_status=status.get("overall_status", "offline"),
     )

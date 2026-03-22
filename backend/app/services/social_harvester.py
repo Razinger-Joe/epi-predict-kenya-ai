@@ -1,7 +1,10 @@
 """
 Social Media Harvester Service — Orchestrator
 ==============================================
-Coordinates data collection from real sources (Twitter/X via twikit)
+Coordinates data collection from real sources:
+  - Twitter/X via twikit (Phase 1)
+  - Facebook Graph API (Phase 2)
+  - Grok xAI live search (Phase 2)
 with graceful fallback to mock/simulated data.
 
 Modes:
@@ -24,6 +27,20 @@ try:
     TWITTER_HARVESTER_AVAILABLE = True
 except ImportError:
     TWITTER_HARVESTER_AVAILABLE = False
+
+# Try importing the Facebook harvester
+try:
+    from app.services.facebook_harvester import FacebookHarvester
+    FACEBOOK_HARVESTER_AVAILABLE = True
+except ImportError:
+    FACEBOOK_HARVESTER_AVAILABLE = False
+
+# Try importing the Grok xAI analyzer
+try:
+    from app.services.grok_analyzer import GrokAnalyzer
+    GROK_ANALYZER_AVAILABLE = True
+except ImportError:
+    GROK_ANALYZER_AVAILABLE = False
 
 from app.models.social import SocialSignal, SentimentEnum
 
@@ -177,21 +194,48 @@ class SocialHarvester:
     def __init__(self, mode: Optional[str] = None):
         self.mode = mode or getattr(settings, "SOCIAL_HARVEST_MODE", "hybrid")
         self._twitter: Optional[TwitterHarvester] = None
+        self._facebook: Optional[FacebookHarvester] = None
+        self._grok: Optional[GrokAnalyzer] = None
         self._init_sources()
 
     def _init_sources(self):
         """Initialize available data sources based on config."""
-        if TWITTER_HARVESTER_AVAILABLE and self.mode != "mock":
+        if self.mode == "mock":
+            return
+
+        # Twitter/X (Phase 1)
+        if TWITTER_HARVESTER_AVAILABLE:
             try:
                 self._twitter = TwitterHarvester(
                     username=getattr(settings, "TWITTER_USERNAME", ""),
                     email=getattr(settings, "TWITTER_EMAIL", ""),
                     password=getattr(settings, "TWITTER_PASSWORD", ""),
                 )
-                logger.info(f"Twitter harvester initialized (mode={self.mode})")
+                logger.info("Twitter harvester initialized")
             except Exception as e:
                 logger.warning(f"Twitter harvester init failed: {e}")
-                self._twitter = None
+
+        # Facebook Graph API (Phase 2)
+        if FACEBOOK_HARVESTER_AVAILABLE:
+            try:
+                self._facebook = FacebookHarvester(
+                    access_token=getattr(settings, "FACEBOOK_ACCESS_TOKEN", ""),
+                    page_ids=getattr(settings, "FACEBOOK_PAGE_IDS", ""),
+                )
+                logger.info("Facebook harvester initialized")
+            except Exception as e:
+                logger.warning(f"Facebook harvester init failed: {e}")
+
+        # Grok xAI (Phase 2)
+        if GROK_ANALYZER_AVAILABLE:
+            try:
+                self._grok = GrokAnalyzer(
+                    api_key=getattr(settings, "XAI_API_KEY", ""),
+                    model=getattr(settings, "XAI_MODEL", "grok-3-mini"),
+                )
+                logger.info("Grok analyzer initialized")
+            except Exception as e:
+                logger.warning(f"Grok analyzer init failed: {e}")
 
     def get_signals(
         self,
@@ -220,18 +264,53 @@ class SocialHarvester:
         signals = []
         sources_tried = []
 
-        # ── Try Twitter/X (twikit) ──────────────────────────────────────────
+        # ── Twitter/X (Phase 1) ─────────────────────────────────────────────
         if self.mode in ("live", "hybrid") and self._twitter and self._twitter.is_available():
             try:
-                twitter_signals = await self._twitter.search_health_tweets(
+                tw_signals = await self._twitter.search_health_tweets(
                     county=county, disease=disease, limit=limit
                 )
-                signals.extend(twitter_signals)
+                signals.extend(tw_signals)
                 sources_tried.append("twitter_live")
-                logger.info(f"Twitter returned {len(twitter_signals)} signals")
+                logger.info(f"Twitter returned {len(tw_signals)} signals")
             except Exception as e:
                 logger.warning(f"Twitter harvest failed: {e}")
                 sources_tried.append("twitter_error")
+
+        # ── Facebook (Phase 2) ──────────────────────────────────────────────
+        if self.mode in ("live", "hybrid") and self._facebook and self._facebook.is_available():
+            try:
+                fb_signals = await self._facebook.search_health_posts(
+                    county=county, disease=disease, limit=limit
+                )
+                signals.extend(fb_signals)
+                sources_tried.append("facebook_live")
+                logger.info(f"Facebook returned {len(fb_signals)} signals")
+            except Exception as e:
+                logger.warning(f"Facebook harvest failed: {e}")
+                sources_tried.append("facebook_error")
+
+        # ── Grok xAI (Phase 2) ──────────────────────────────────────────────
+        if self.mode in ("live", "hybrid") and self._grok and self._grok.is_available():
+            try:
+                grok_signals = await self._grok.live_search_health(
+                    county=county, disease=disease, limit=max(5, limit // 2)
+                )
+                signals.extend(grok_signals)
+                sources_tried.append("grok_live")
+                logger.info(f"Grok returned {len(grok_signals)} signals")
+            except Exception as e:
+                logger.warning(f"Grok harvest failed: {e}")
+                sources_tried.append("grok_error")
+
+        # ── Enrich with Grok AI classification (if live signals found) ──────
+        if signals and self._grok and self._grok.is_available():
+            if source not in ("mock",) and any(s.data_source != "mock" for s in signals):
+                try:
+                    signals = await self._grok.classify_signals(signals)
+                    logger.info("Grok classified signals")
+                except Exception as e:
+                    logger.warning(f"Grok classification failed: {e}")
 
         # ── Fallback to mock ────────────────────────────────────────────────
         if not signals and self.mode in ("mock", "hybrid"):
@@ -260,7 +339,7 @@ class SocialHarvester:
         sources_queried = []
         errors = []
 
-        # Twitter
+        # Twitter/X (Phase 1)
         if self._twitter and self._twitter.is_available():
             try:
                 tw = await self._twitter.search_health_tweets(
@@ -270,6 +349,28 @@ class SocialHarvester:
                 sources_queried.append("Twitter/X (twikit)")
             except Exception as e:
                 errors.append(f"Twitter: {str(e)}")
+
+        # Facebook Graph API (Phase 2)
+        if self._facebook and self._facebook.is_available():
+            try:
+                fb = await self._facebook.search_health_posts(
+                    county=county, disease=disease, limit=limit
+                )
+                signals.extend(fb)
+                sources_queried.append("Facebook (Graph API)")
+            except Exception as e:
+                errors.append(f"Facebook: {str(e)}")
+
+        # Grok xAI live search (Phase 2)
+        if self._grok and self._grok.is_available():
+            try:
+                gk = await self._grok.live_search_health(
+                    county=county, disease=disease, limit=max(5, limit // 2)
+                )
+                signals.extend(gk)
+                sources_queried.append("Grok xAI (live search)")
+            except Exception as e:
+                errors.append(f"Grok: {str(e)}")
 
         # Mock fallback
         if not signals and self.mode != "live":
@@ -291,21 +392,55 @@ class SocialHarvester:
         status = {
             "harvest_mode": self.mode,
             "twitter": {},
+            "facebook": {},
+            "grok": {},
             "overall_status": "offline",
         }
+        any_connected = False
+        any_configured = False
 
+        # Twitter status
         if self._twitter:
             status["twitter"] = await self._twitter.get_connection_status()
-            if status["twitter"].get("authenticated"):
-                status["overall_status"] = "connected"
-            elif status["twitter"].get("credentials_configured"):
-                status["overall_status"] = "configured"
         else:
             status["twitter"] = {
                 "platform": "Twitter/X",
                 "status": "not_initialized",
                 "installed": TWITTER_HARVESTER_AVAILABLE,
             }
+
+        # Facebook status
+        if self._facebook:
+            status["facebook"] = await self._facebook.get_connection_status()
+        else:
+            status["facebook"] = {
+                "platform": "Facebook",
+                "status": "not_initialized",
+                "installed": FACEBOOK_HARVESTER_AVAILABLE,
+            }
+
+        # Grok status
+        if self._grok:
+            status["grok"] = await self._grok.get_connection_status()
+        else:
+            status["grok"] = {
+                "platform": "Grok xAI",
+                "status": "not_initialized",
+                "installed": GROK_ANALYZER_AVAILABLE,
+            }
+
+        # Determine overall status
+        for src in ("twitter", "facebook", "grok"):
+            src_status = status[src].get("status", "")
+            if src_status == "connected":
+                any_connected = True
+            elif status[src].get("credentials_configured"):
+                any_configured = True
+
+        if any_connected:
+            status["overall_status"] = "connected"
+        elif any_configured:
+            status["overall_status"] = "configured"
 
         return status
 

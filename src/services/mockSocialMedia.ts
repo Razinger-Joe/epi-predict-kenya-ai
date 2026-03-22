@@ -39,7 +39,14 @@ export interface SocialSignal {
     author_handle: string | null;
     url: string | null;
     is_verified_source: boolean;
-    data_source: 'twitter_live' | 'mock';
+    data_source: 'twitter_live' | 'facebook_live' | 'grok_live' | 'mock';
+    ai_classification?: {
+        severity?: number;
+        confidence?: number;
+        disease_confirmed?: boolean;
+        notes?: string;
+        classified_by?: string;
+    } | null;
 }
 
 export interface SentimentScore {
@@ -65,6 +72,22 @@ export interface HarvestStatus {
         installed: boolean;
         credentials_configured: boolean;
         authenticated: boolean;
+    };
+    facebook: {
+        platform: string;
+        status: string;
+        installed: boolean;
+        credentials_configured: boolean;
+        authenticated: boolean;
+        pages_configured?: number;
+    };
+    grok: {
+        platform: string;
+        status: string;
+        installed: boolean;
+        credentials_configured: boolean;
+        authenticated: boolean;
+        model?: string;
     };
     harvest_mode: string;
     overall_status: string;
@@ -130,6 +153,20 @@ export async function getHarvestStatus(): Promise<HarvestStatus> {
         return {
             twitter: {
                 platform: 'Twitter/X',
+                status: 'api_unreachable',
+                installed: false,
+                credentials_configured: false,
+                authenticated: false,
+            },
+            facebook: {
+                platform: 'Facebook',
+                status: 'api_unreachable',
+                installed: false,
+                credentials_configured: false,
+                authenticated: false,
+            },
+            grok: {
+                platform: 'Grok xAI',
                 status: 'api_unreachable',
                 installed: false,
                 credentials_configured: false,

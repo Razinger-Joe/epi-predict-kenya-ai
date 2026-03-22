@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     TWITTER_PASSWORD: str = ""
     
     # ═══════════════════════════════════════════════════════════════════════════
+    # Facebook Graph API
+    # ═══════════════════════════════════════════════════════════════════════════
+    FACEBOOK_ACCESS_TOKEN: str = ""
+    FACEBOOK_PAGE_IDS: str = ""  # Comma-separated page IDs or usernames
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # Grok xAI — OpenAI-compatible API (live X/web search + classification)
+    # ═══════════════════════════════════════════════════════════════════════════
+    XAI_API_KEY: str = ""
+    XAI_MODEL: str = "grok-3-mini"
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # Social Media Harvest Mode: "live", "mock", or "hybrid"
     # ═══════════════════════════════════════════════════════════════════════════
     SOCIAL_HARVEST_MODE: str = "hybrid"
