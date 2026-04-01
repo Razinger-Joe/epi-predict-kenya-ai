@@ -21,10 +21,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // 0. Check for presentation day mock session first
+        const mockSessionData = localStorage.getItem("epi_mock_session");
+        if (mockSessionData) {
+            try {
+                const parsedSession = JSON.parse(mockSessionData);
+                setSession(parsedSession);
+                setUser(parsedSession.user);
+                setLoading(false);
+                return;
+            } catch (e) {
+                console.error("Failed to parse mock session");
+            }
+        }
+
         // 1. Check active session on mount
-        supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
-            setSession(activeSession);
-            setUser(activeSession?.user ?? null);
+        supabase.auth.getSession().then(({ data: { session: activeSession }, error }) => {
+            if (!localStorage.getItem("epi_mock_session")) {
+                setSession(activeSession);
+                setUser(activeSession?.user ?? null);
+            }
+            setLoading(false);
+        }).catch(() => {
+            // Unreachable or net error
             setLoading(false);
         });
 
@@ -32,33 +51,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, newSession) => {
-            setSession(newSession);
-            setUser(newSession?.user ?? null);
-            setLoading(false);
+            if (!localStorage.getItem("epi_mock_session")) {
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                setLoading(false);
+            }
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
     const signIn = useCallback(async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        return { error };
+        // PRESENTATION HARDCODED CREDENTIALS
+        if (
+            (email.toLowerCase() === 'razingerjosef@gmail.com' && password === 'JM254') ||
+            (email.toLowerCase() === 'donholmonlinestores89@gmail.com' && password === 'SW2211')
+        ) {
+            const mockUser: User = { 
+                id: 'mock-user-1234', 
+                email: email.toLowerCase(),
+                app_metadata: {},
+                user_metadata: {},
+                aud: 'authenticated',
+                created_at: new Date().toISOString()
+            } as User;
+            
+            const mockSession: Session = { 
+                access_token: 'mock-token-xyz', 
+                token_type: 'bearer',
+                expires_in: 3600,
+                refresh_token: 'mock-refresh-xyz',
+                user: mockUser 
+            };
+            
+            localStorage.setItem("epi_mock_session", JSON.stringify(mockSession));
+            setUser(mockUser);
+            setSession(mockSession);
+            return { error: null };
+        }
+
+        try {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            return { error };
+        } catch (err: any) {
+            return { error: { message: "Network Error: Unable to reach authentication server", name: "AuthError", status: 500 } as AuthError };
+        }
     }, []);
 
     const signUp = useCallback(
         async (email: string, password: string, metadata?: Record<string, unknown>) => {
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: { data: metadata },
-            });
-            return { error };
+            try {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: { data: metadata },
+                });
+                return { error };
+            } catch (err: any) {
+                return { error: { message: "Network Error: Unable to reach authentication server", name: "AuthError", status: 500 } as AuthError };
+            }
         },
         []
     );
 
     const signOut = useCallback(async () => {
-        await supabase.auth.signOut();
+        // Clear mock session if exists
+        localStorage.removeItem("epi_mock_session");
+        
+        try {
+            await supabase.auth.signOut();
+        } catch (e) {
+            console.warn("Supabase signout failed", e);
+        }
+        
+        setUser(null);
+        setSession(null);
     }, []);
 
     return (
