@@ -1,34 +1,69 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# Docker Compose - EpiPredict Kenya AI Monolithic Stack
+# Docker Compose - EpiPredict Kenya AI Multi-service Stack
 # ═══════════════════════════════════════════════════════════════════════════════
 
 version: '3.8'
 
 services:
-  # Backend Service (FastAPI + ML)
+  # 1. Database Tier (PostgreSQL)
+  database-service:
+    image: postgres:15-alpine
+    container_name: epipredict-database
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=epipredict
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d epipredict"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - epipredict-network
+
+  # 2. Standalone Machine Learning Tier (FastAPI)
+  ml-service:
+    build:
+      context: ./ml-service
+      dockerfile: Dockerfile
+    container_name: epipredict-ml-service
+    ports:
+      - "5000:5000"
+    volumes:
+      - ml_models:/app/models
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - epipredict-network
+
+  # 3. Backend Gateway Tier (FastAPI Gateway)
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: epipredict-backend
     ports:
       - "8000:8000"
+    depends_on:
+      database-service:
+        condition: service_healthy
+      ml-service:
+        condition: service_healthy
     environment:
-      # Supabase Configuration
-      - SUPABASE_URL=${SUPABASE_URL}
-      - SUPABASE_KEY=${SUPABASE_KEY}
-      - DATABASE_URL=${DATABASE_URL}
-
-      # Application Configuration
+      - DATABASE_URL=postgresql://postgres:postgres@database-service:5432/epipredict
+      - ML_SERVICE_URL=http://ml-service:5000
       - ENVIRONMENT=production
       - PORT=8000
-      - ALLOWED_ORIGINS=http://localhost,http://frontend
-
-      # Optional: LLM Configuration
-      - OLLAMA_URL=${OLLAMA_URL:-http://localhost:11434}
-      # Optional: Social Media APIs (Future)
-      # - TWITTER_API_KEY=${TWITTER_API_KEY}
-      # - TWITTER_API_SECRET=${TWITTER_API_SECRET}
+      - ALLOWED_ORIGINS=http://localhost,http://frontend,http://localhost:5173
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
       interval: 30s
@@ -39,11 +74,11 @@ services:
     networks:
       - epipredict-network
 
-  # Frontend Service (React + nginx)
+  # 4. Frontend Client Tier (React + Nginx)
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
+      dockerfile: Dockerfile
     container_name: epipredict-frontend
     ports:
       - "80:80"
@@ -65,7 +100,8 @@ networks:
     driver: bridge
     name: epipredict-network
 
-# Optional: If you want to add volumes for persistence
-# volumes:
-#   ml-models:
-#     name: epipredict-ml-models
+volumes:
+  postgres_data:
+    name: epipredict-postgres-data
+  ml_models:
+    name: epipredict-ml-models

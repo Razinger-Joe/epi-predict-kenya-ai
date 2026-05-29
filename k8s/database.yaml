@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-pvc
+  labels:
+    app: database-service
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-deployment
+  labels:
+    app: database-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database-service
+  template:
+    metadata:
+      labels:
+        app: database-service
+    spec:
+      containers:
+        - name: database
+          image: postgres:15-alpine
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "postgres"
+            - name: POSTGRES_DB
+              value: "epipredict"
+          ports:
+            - containerPort: 5432
+              name: postgres
+          volumeMounts:
+            - name: database-storage
+              mountPath: /var/lib/postgresql/data
+          healthCheck:
+          # Note: Standard k8s uses livenessProbe and readinessProbe
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - epipredict
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - epipredict
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: database-storage
+          persistentVolumeClaim:
+            claimName: database-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    app: database-service
+  type: ClusterIP

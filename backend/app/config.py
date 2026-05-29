@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:5173"
     ENVIRONMENT: str = "development"
     PORT: int = 8000  # Railway sets this automatically
+    DATABASE_URL: str = ""
+    ML_SERVICE_URL: str = "http://ml-service:5000"
     
     # ═══════════════════════════════════════════════════════════════════════════
     # Twitter/X via twikit (free unofficial API)

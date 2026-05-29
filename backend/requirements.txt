@@ -20,6 +20,7 @@ pydantic-settings==2.1.0      # Configuration management
 supabase==2.3.4               # Backend-as-Service database
 sqlalchemy==2.0.23            # ORM (for future SQL integration)
 alembic==1.13.1               # Database migration management
+psycopg2-binary==2.9.9        # PostgreSQL driver
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Date/Time Handling
