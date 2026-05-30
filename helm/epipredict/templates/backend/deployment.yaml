@@ -1,0 +1,70 @@
+{{/*
+Backend Deployment — FastAPI API Gateway.
+WHY: The backend is the central nervous system of EpiPredict. It handles
+all API requests, authenticates users, orchestrates ML predictions,
+and communicates with the database. It's the busiest service,
+which is why HPA is critical here.
+*/}}
+{{- if .Values.backend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "epipredict.fullname" . }}-backend
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "epipredict.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      labels:
+        {{- include "epipredict.labels" . | nindent 8 }}
+        {{- include "epipredict.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.backend.port }}
+              name: http
+              protocol: TCP
+          env:
+            # Database URL from Secret (not hardcoded!)
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epipredict.secretName" . }}
+                  key: DATABASE_URL
+            # ML Service URL (constructed from Helm values)
+            - name: ML_SERVICE_URL
+              value: {{ include "epipredict.mlServiceUrl" . | quote }}
+            - name: ENVIRONMENT
+              value: {{ .Values.backend.env.environment | quote }}
+            - name: PORT
+              value: {{ .Values.backend.port | quote }}
+            - name: ALLOWED_ORIGINS
+              value: {{ .Values.backend.env.allowedOrigins | quote }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.backend.livenessProbe.path }}
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: {{ .Values.backend.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.backend.readinessProbe.path }}
+              port: {{ .Values.backend.port }}
+            initialDelaySeconds: {{ .Values.backend.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.backend.readinessProbe.periodSeconds }}
+{{- end }}

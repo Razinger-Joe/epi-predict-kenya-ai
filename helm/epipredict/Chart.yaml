@@ -1,0 +1,25 @@
+apiVersion: v2
+name: epipredict
+description: >-
+  EpiPredict Kenya AI — AI-Powered Disease Outbreak Prediction for Kenya.
+  A microservices application with React frontend, FastAPI backend,
+  ML prediction service, and PostgreSQL database.
+
+type: application
+version: 1.0.0
+appVersion: "3.0.0"
+
+keywords:
+  - healthcare
+  - machine-learning
+  - kenya
+  - disease-prediction
+  - kubernetes
+
+home: https://github.com/Razinger-Joe/epi-predict-kenya-ai
+sources:
+  - https://github.com/Razinger-Joe/epi-predict-kenya-ai
+
+maintainers:
+  - name: Razinger-Joe
+    url: https://github.com/Razinger-Joe

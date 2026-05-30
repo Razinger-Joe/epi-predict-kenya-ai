@@ -1,0 +1,22 @@
+{{/*
+ML Service PVC — persistent storage for trained ML models (.pkl files).
+WHY: Training a machine learning model takes time. Without persistent storage,
+the model would need to be retrained every time the pod restarts.
+This PVC keeps trained models safe between pod restarts.
+*/}}
+{{- if and .Values.mlService.enabled .Values.mlService.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "epipredict.fullname" . }}-ml-models-pvc
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml-service
+spec:
+  accessModes:
+    - {{ .Values.mlService.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.mlService.persistence.size }}
+{{- end }}

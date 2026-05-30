@@ -1,0 +1,51 @@
+
+═══════════════════════════════════════════════════════════════════════════════
+  🇰🇪  EpiPredict Kenya AI — Deployed Successfully!  🇰🇪
+═══════════════════════════════════════════════════════════════════════════════
+
+  Release:     {{ .Release.Name }}
+  Namespace:   {{ include "epipredict.namespace" . }}
+  Environment: {{ .Values.global.environment }}
+  Chart:       {{ include "epipredict.chart" . }}
+
+───────────────────────────────────────────────────────────────────────────────
+  📊 SERVICES STATUS
+───────────────────────────────────────────────────────────────────────────────
+
+  Run these commands to check your deployment:
+
+    kubectl get pods -n {{ include "epipredict.namespace" . }}
+    kubectl get services -n {{ include "epipredict.namespace" . }}
+    kubectl get hpa -n {{ include "epipredict.namespace" . }}
+
+───────────────────────────────────────────────────────────────────────────────
+  🌐 ACCESS YOUR APPLICATION
+───────────────────────────────────────────────────────────────────────────────
+
+{{- if .Values.ingress.enabled }}
+  Ingress is enabled! Access the application at:
+
+    Frontend:    http://{{ .Values.ingress.host }}/
+    Backend API: http://{{ .Values.ingress.host }}/api/
+    Health:      http://{{ .Values.ingress.host }}/health
+
+  ⚠️  Make sure you've added this to your hosts file:
+      127.0.0.1  {{ .Values.ingress.host }}
+
+  On Windows: notepad C:\Windows\System32\drivers\etc\hosts
+{{- else }}
+  Ingress is disabled. Use port-forwarding to access services:
+
+    kubectl port-forward svc/{{ include "epipredict.fullname" . }}-frontend 8080:80 -n {{ include "epipredict.namespace" . }}
+    kubectl port-forward svc/{{ include "epipredict.fullname" . }}-backend 8000:8000 -n {{ include "epipredict.namespace" . }}
+{{- end }}
+
+───────────────────────────────────────────────────────────────────────────────
+  📖 USEFUL COMMANDS
+───────────────────────────────────────────────────────────────────────────────
+
+  View logs:      kubectl logs -f deploy/{{ include "epipredict.fullname" . }}-backend -n {{ include "epipredict.namespace" . }}
+  Scale up:       kubectl scale deploy/{{ include "epipredict.fullname" . }}-backend --replicas=3 -n {{ include "epipredict.namespace" . }}
+  Uninstall:      helm uninstall {{ .Release.Name }} -n {{ include "epipredict.namespace" . }}
+
+═══════════════════════════════════════════════════════════════════════════════

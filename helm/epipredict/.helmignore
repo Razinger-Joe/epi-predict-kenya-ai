@@ -1,0 +1,13 @@
+# Patterns to ignore when packaging Helm chart
+.git
+.gitignore
+.DS_Store
+*.swp
+*.bak
+*.tmp
+node_modules/
+__pycache__/
+*.pyc
+dist/
+.venv/
+venv/

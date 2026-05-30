@@ -1,0 +1,25 @@
+{{/*
+ML Service — ClusterIP (internal only).
+WHY: The ML service is called by the backend, not directly by users.
+The backend proxies requests via: http://{{ include "epipredict.fullname" . }}-ml-service:5000/predict
+*/}}
+{{- if .Values.mlService.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "epipredict.fullname" . }}-ml-service
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml-service
+spec:
+  type: {{ .Values.mlService.service.type }}
+  ports:
+    - port: {{ .Values.mlService.service.port }}
+      targetPort: {{ .Values.mlService.port }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "epipredict.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ml-service
+{{- end }}

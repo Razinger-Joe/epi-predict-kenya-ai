@@ -1,0 +1,64 @@
+{{/*
+ML Service Deployment — FastAPI + scikit-learn prediction engine.
+WHY: This is the brain of EpiPredict. It runs the Gaussian Naive Bayes
+classifier that predicts disease outbreaks 14-21 days ahead.
+Separated as a microservice so it can scale independently from the backend.
+*/}}
+{{- if .Values.mlService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "epipredict.fullname" . }}-ml-service
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml-service
+spec:
+  {{- if not .Values.mlService.autoscaling.enabled }}
+  replicas: {{ .Values.mlService.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "epipredict.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ml-service
+  template:
+    metadata:
+      labels:
+        {{- include "epipredict.labels" . | nindent 8 }}
+        {{- include "epipredict.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ml-service
+    spec:
+      containers:
+        - name: ml-service
+          image: "{{ .Values.mlService.image.repository }}:{{ .Values.mlService.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.mlService.port }}
+              name: http
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.mlService.resources | nindent 12 }}
+          {{- if .Values.mlService.persistence.enabled }}
+          volumeMounts:
+            - name: model-storage
+              mountPath: /app/models
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.mlService.livenessProbe.path }}
+              port: {{ .Values.mlService.port }}
+            initialDelaySeconds: {{ .Values.mlService.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mlService.livenessProbe.periodSeconds }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.mlService.readinessProbe.path }}
+              port: {{ .Values.mlService.port }}
+            initialDelaySeconds: {{ .Values.mlService.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.mlService.readinessProbe.periodSeconds }}
+      {{- if .Values.mlService.persistence.enabled }}
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: {{ include "epipredict.fullname" . }}-ml-models-pvc
+      {{- end }}
+{{- end }}

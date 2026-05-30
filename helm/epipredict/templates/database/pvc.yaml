@@ -1,0 +1,22 @@
+{{/*
+Database PersistentVolumeClaim — reserves disk space for PostgreSQL data.
+WHY: Without persistent storage, your database data would be lost every time
+the pod restarts. A PVC is like renting a storage unit that survives even
+if the pod (the "tenant") moves out and a new one moves in.
+*/}}
+{{- if and .Values.database.enabled .Values.database.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "epipredict.fullname" . }}-database-pvc
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  accessModes:
+    - {{ .Values.database.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.database.persistence.size }}
+{{- end }}

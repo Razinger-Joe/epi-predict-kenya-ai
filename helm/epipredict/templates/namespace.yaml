@@ -1,0 +1,12 @@
+{{/*
+Namespace — creates a dedicated namespace for all EpiPredict resources.
+WHY: Namespaces provide isolation. Like giving EpiPredict its own "county"
+within the Kubernetes "country", so resources don't clash with other apps.
+*/}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    environment: {{ .Values.global.environment }}

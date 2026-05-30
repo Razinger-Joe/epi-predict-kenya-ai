@@ -1,0 +1,52 @@
+{{/*
+ML Service HPA — Horizontal Pod Autoscaler.
+WHY: During peak prediction requests (e.g., when multiple counties submit
+outbreak data simultaneously), the ML service needs to scale up.
+HPA automatically adds more pods when CPU/memory exceeds the target.
+Like a hospital opening more labs during a pandemic.
+*/}}
+{{- if and .Values.mlService.enabled .Values.mlService.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "epipredict.fullname" . }}-ml-service-hpa
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "epipredict.fullname" . }}-ml-service
+  minReplicas: {{ .Values.mlService.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.mlService.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.mlService.autoscaling.targetCPUUtilization }}
+    {{- if .Values.mlService.autoscaling.targetMemoryUtilization }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.mlService.autoscaling.targetMemoryUtilization }}
+    {{- end }}
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 120
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+{{- end }}

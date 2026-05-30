@@ -29,3 +29,7 @@ __pycache__/
 .pytest_cache/
 venv/
 .venv/
+
+# Helm packaging
+*.tgz
+charts/

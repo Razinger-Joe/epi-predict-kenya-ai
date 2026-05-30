@@ -5,6 +5,48 @@ All notable changes to EpiPredict Kenya AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-05-30
+
+### Added
+- **Helm Charts** (`helm/epipredict/`): Full production-grade Helm chart with templated deployments
+  - `Chart.yaml` — Chart metadata with semantic versioning
+  - `values.yaml` — All configurable values with rich documentation
+  - `values-dev.yaml` — Development profile (1 replica, no HPA, low resources)
+  - `values-prod.yaml` — Production profile (3+ replicas, HPA enabled, high resources)
+  - `templates/_helpers.tpl` — Reusable template helpers following Kubernetes label conventions
+  - `templates/namespace.yaml` — Dedicated namespace for isolation
+  - `templates/secrets.yaml` — Base64-encoded database credentials (no more hardcoded passwords)
+  - `templates/ingress.yaml` — Nginx Ingress with path-based routing
+  - `templates/database/` — PostgreSQL PVC, Deployment, Service
+  - `templates/ml-service/` — ML Service PVC, Deployment, Service, HPA
+  - `templates/backend/` — Backend Deployment, Service, HPA
+  - `templates/frontend/` — Frontend Deployment, Service, HPA
+  - `templates/NOTES.txt` — Post-install instructions
+- **Nginx Ingress** — Single entry point replacing NodePort:
+  - `/` → Frontend (React dashboard)
+  - `/api/` → Backend (FastAPI gateway) with URL rewriting
+  - `/health` → Backend health check
+- **Horizontal Pod Autoscaler (HPA)** — Auto-scaling for 3 services:
+  - Backend: 2→5 replicas at 70% CPU / 80% memory
+  - ML Service: 1→3 replicas at 60% CPU / 70% memory
+  - Frontend: 1→3 replicas at 80% CPU
+  - Stabilization windows to prevent scaling flapping
+- **Kubernetes Secrets** — Database credentials stored as Secrets, referenced via `secretKeyRef`
+- **Resource Limits** — CPU and memory requests/limits on all containers
+- **K8s Automation Agent** (`scripts/k8s-agent.ps1`): PowerShell menu-driven automation
+  - Prerequisites check, image building, Helm deploy, status dashboard
+  - Log viewer, scaling, port forwarding, load testing
+  - Full guided walkthrough mode for learning
+- **Production K8s Guide** (`docs/PRODUCTION_K8S_GUIDE.md`): 7-chapter DevOps learning guide
+  - Helm charts, Ingress, HPA, Secrets, Automation, Monitoring, Production Readiness
+  - Kenya-specific analogies, Mermaid diagrams, troubleshooting flowcharts
+
+### Changed
+- **README.md** — Phase 6 marked complete, Phase 7 roadmap added, new documentation links
+- **CHANGELOG.md** — Added v3.0.0 entry
+
+---
+
 ## [2.0.0] - 2026-05-29
 
 ### Added

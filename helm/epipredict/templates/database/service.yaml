@@ -1,0 +1,26 @@
+{{/*
+Database Service — ClusterIP (internal only).
+WHY: The database should NEVER be exposed outside the cluster.
+Only the backend needs to reach it, and it does so via this internal DNS name:
+  {{ include "epipredict.fullname" . }}-database:5432
+*/}}
+{{- if .Values.database.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "epipredict.fullname" . }}-database
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  type: {{ .Values.database.service.type }}
+  ports:
+    - port: {{ .Values.database.service.port }}
+      targetPort: {{ .Values.database.port }}
+      protocol: TCP
+      name: postgres
+  selector:
+    {{- include "epipredict.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+{{- end }}

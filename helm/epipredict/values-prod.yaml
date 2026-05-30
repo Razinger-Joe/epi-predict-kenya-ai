@@ -1,0 +1,98 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EpiPredict Kenya AI — PRODUCTION Environment Overrides
+# ═══════════════════════════════════════════════════════════════════════════════
+# Usage: helm install epipredict ./helm/epipredict -f helm/epipredict/values-prod.yaml
+#
+# Production profile:
+#   ✅ Multiple replicas for high availability
+#   ✅ HPA enabled for auto-scaling
+#   ✅ Higher resource limits for real traffic
+#   ✅ Stricter rate limiting
+#   ✅ TLS-ready annotations
+# ═══════════════════════════════════════════════════════════════════════════════
+
+global:
+  environment: production
+  imagePullPolicy: Always
+
+frontend:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilization: 75
+
+backend:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  env:
+    environment: production
+    allowedOrigins: "https://epipredict.local,https://epipredict-kenya.com"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilization: 65
+    targetMemoryUtilization: 75
+
+mlService:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilization: 55
+    targetMemoryUtilization: 65
+
+database:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  persistence:
+    size: 5Gi
+
+secrets:
+  database:
+    # -- In real production, use external secret managers (Vault, AWS Secrets Manager)
+    # -- These are placeholder values. Override via --set or external secrets operator.
+    user: epipredict_admin
+    password: CHANGE_ME_IN_PRODUCTION
+    name: epipredict
+
+ingress:
+  enabled: true
+  host: epipredict-kenya.com
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  tls:
+    enabled: true
+    secretName: epipredict-tls-prod

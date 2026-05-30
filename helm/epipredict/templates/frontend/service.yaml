@@ -1,0 +1,26 @@
+{{/*
+Frontend Service — ClusterIP (accessed via Ingress).
+WHY: The frontend no longer needs a NodePort. Instead, the Ingress controller
+routes traffic from the "/" path to this ClusterIP service. This is cleaner
+and more secure than exposing a random high port like 30080.
+*/}}
+{{- if .Values.frontend.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "epipredict.fullname" . }}-frontend
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  type: {{ .Values.frontend.service.type }}
+  ports:
+    - port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.port }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "epipredict.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+{{- end }}

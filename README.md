@@ -408,13 +408,21 @@ kubectl get services
 - [x] NodePort access on port 30080
 - [x] SQLAlchemy ↔ Supabase database abstraction layer
 
-### Phase 6: Production Kubernetes 🔜 **NEXT**
-- [ ] Helm charts for templated deployments
-- [ ] Ingress Controller (Nginx Ingress)
-- [ ] Secrets management (Kubernetes Secrets)
-- [ ] Horizontal Pod Autoscaler (HPA)
+### Phase 6: Production Kubernetes ✅ **COMPLETED**
+- [x] Helm charts for templated deployments (`helm/epipredict/`)
+- [x] Ingress Controller (Nginx Ingress with path-based routing)
+- [x] Secrets management (Kubernetes Secrets, base64 encoded)
+- [x] Horizontal Pod Autoscaler (HPA) for backend + ML service
+- [x] Resource limits & requests on all containers
+- [x] Environment profiles (dev / prod)
+- [x] K8s Automation Agent (`scripts/k8s-agent.ps1`)
+- [x] Comprehensive Production K8s Guide (`docs/PRODUCTION_K8S_GUIDE.md`)
+
+### Phase 7: Cloud & Monitoring 🔜 **NEXT**
 - [ ] Monitoring (Prometheus + Grafana)
 - [ ] Cloud deployment (GKE / EKS / AKS)
+- [ ] CI/CD with Helm (GitHub Actions)
+- [ ] cert-manager for automatic TLS
 
 ---
 
@@ -467,7 +475,9 @@ Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a P
 | Document | Description |
 |----------|-------------|
 | [README.md](README.md) | This file — project overview |
-| [docs/KUBERNETES_GUIDE.md](docs/KUBERNETES_GUIDE.md) | 🎓 **Full DevOps & Kubernetes learning guide** |
+| [docs/PRODUCTION_K8S_GUIDE.md](docs/PRODUCTION_K8S_GUIDE.md) | 🎓 **Production K8s Guide (Helm, Ingress, HPA)** |
+| [docs/KUBERNETES_GUIDE.md](docs/KUBERNETES_GUIDE.md) | 🎓 Full DevOps & Kubernetes learning guide |
+| [scripts/k8s-agent.ps1](scripts/k8s-agent.ps1) | 🤖 **K8s Automation Agent (PowerShell)** |
 | [DOCKER.md](DOCKER.md) | Docker quick reference |
 | [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Production deployment guide |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |

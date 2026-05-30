@@ -1,0 +1,221 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EpiPredict Kenya AI — Default Helm Values
+# ═══════════════════════════════════════════════════════════════════════════════
+# This file contains ALL configurable values for the EpiPredict Helm chart.
+# Override these values using:
+#   helm install epipredict ./helm/epipredict -f helm/epipredict/values-dev.yaml
+#   helm install epipredict ./helm/epipredict -f helm/epipredict/values-prod.yaml
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# -- Global settings applied across all services
+global:
+  # -- Kubernetes namespace to deploy into
+  namespace: epipredict
+  # -- Environment label (development, staging, production)
+  environment: production
+  # -- Image pull policy (Always, IfNotPresent, Never)
+  imagePullPolicy: IfNotPresent
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FRONTEND — React + Nginx
+# ═══════════════════════════════════════════════════════════════════════════════
+frontend:
+  # -- Enable/disable the frontend deployment
+  enabled: true
+  # -- Number of replicas
+  replicaCount: 1
+  image:
+    repository: epipredict-frontend
+    tag: latest
+  # -- Container port (Nginx serves on 80)
+  port: 80
+  service:
+    # -- Service type: ClusterIP (use Ingress) or NodePort (direct access)
+    type: ClusterIP
+    port: 80
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  # -- Liveness probe configuration
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  # -- Readiness probe configuration
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  # -- HPA configuration
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilization: 80
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BACKEND — FastAPI Gateway
+# ═══════════════════════════════════════════════════════════════════════════════
+backend:
+  # -- Enable/disable the backend deployment
+  enabled: true
+  # -- Number of replicas
+  replicaCount: 2
+  image:
+    repository: epipredict-backend
+    tag: latest
+  # -- Container port
+  port: 8000
+  service:
+    type: ClusterIP
+    port: 8000
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  # -- Liveness probe configuration
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 20
+    periodSeconds: 10
+  # -- Readiness probe configuration
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  # -- Environment variables
+  env:
+    environment: production
+    allowedOrigins: "http://localhost,http://epipredict.local,http://frontend"
+  # -- HPA configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilization: 70
+    targetMemoryUtilization: 80
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ML SERVICE — FastAPI + scikit-learn
+# ═══════════════════════════════════════════════════════════════════════════════
+mlService:
+  # -- Enable/disable the ML service deployment
+  enabled: true
+  # -- Number of replicas
+  replicaCount: 1
+  image:
+    repository: epipredict-ml-service
+    tag: latest
+  # -- Container port
+  port: 5000
+  service:
+    type: ClusterIP
+    port: 5000
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  # -- Liveness probe configuration
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  # -- Readiness probe configuration
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  # -- Persistent Volume for ML models
+  persistence:
+    enabled: true
+    size: 500Mi
+    accessMode: ReadWriteOnce
+  # -- HPA configuration
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilization: 60
+    targetMemoryUtilization: 70
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DATABASE — PostgreSQL 15
+# ═══════════════════════════════════════════════════════════════════════════════
+database:
+  # -- Enable/disable the database deployment
+  enabled: true
+  # -- Number of replicas (always 1 for PostgreSQL without replication)
+  replicaCount: 1
+  image:
+    repository: postgres
+    tag: "15-alpine"
+  # -- Container port
+  port: 5432
+  service:
+    type: ClusterIP
+    port: 5432
+  # -- Resource requests and limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  # -- Persistent Volume for database data
+  persistence:
+    enabled: true
+    size: 1Gi
+    accessMode: ReadWriteOnce
+  # -- Liveness probe configuration
+  livenessProbe:
+    initialDelaySeconds: 15
+    periodSeconds: 10
+  # -- Readiness probe configuration
+  readinessProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# SECRETS — Database credentials
+# ═══════════════════════════════════════════════════════════════════════════════
+secrets:
+  # -- PostgreSQL credentials (will be base64 encoded in the Secret)
+  database:
+    user: postgres
+    password: postgres
+    name: epipredict
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# INGRESS — Nginx Ingress Controller
+# ═══════════════════════════════════════════════════════════════════════════════
+ingress:
+  # -- Enable/disable Ingress
+  enabled: true
+  # -- Ingress class name (nginx, traefik, etc.)
+  className: nginx
+  # -- Hostname for the Ingress
+  host: epipredict.local
+  # -- Annotations for the Ingress resource
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/limit-rps: "20"
+  # -- TLS configuration (disabled by default for local dev)
+  tls:
+    enabled: false
+    secretName: epipredict-tls

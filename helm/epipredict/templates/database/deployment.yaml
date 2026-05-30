@@ -1,0 +1,95 @@
+{{/*
+Database Deployment — PostgreSQL 15 Alpine.
+WHY: The database is the foundation of the application. All disease data,
+predictions, and user records are stored here. We use a single replica
+because PostgreSQL doesn't support horizontal scaling without StatefulSets.
+*/}}
+{{- if .Values.database.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "epipredict.fullname" . }}-database
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  replicas: {{ .Values.database.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "epipredict.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  # Recreate strategy for databases — we can't have two PostgreSQL instances
+  # writing to the same volume simultaneously (data corruption risk)
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "epipredict.labels" . | nindent 8 }}
+        {{- include "epipredict.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      containers:
+        - name: database
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag }}"
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.database.port }}
+              name: postgres
+              protocol: TCP
+          # Credentials from Kubernetes Secret (not hardcoded!)
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epipredict.secretName" . }}
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epipredict.secretName" . }}
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "epipredict.secretName" . }}
+                  key: POSTGRES_DB
+          # Resource limits prevent the database from consuming all cluster resources
+          resources:
+            {{- toYaml .Values.database.resources | nindent 12 }}
+          {{- if .Values.database.persistence.enabled }}
+          volumeMounts:
+            - name: database-storage
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+          {{- end }}
+          # Liveness probe — is PostgreSQL alive? If not, restart the container
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+                - -d
+                - $(POSTGRES_DB)
+            initialDelaySeconds: {{ .Values.database.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.database.livenessProbe.periodSeconds }}
+          # Readiness probe — is PostgreSQL ready to accept connections?
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - $(POSTGRES_USER)
+                - -d
+                - $(POSTGRES_DB)
+            initialDelaySeconds: {{ .Values.database.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.database.readinessProbe.periodSeconds }}
+      {{- if .Values.database.persistence.enabled }}
+      volumes:
+        - name: database-storage
+          persistentVolumeClaim:
+            claimName: {{ include "epipredict.fullname" . }}-database-pvc
+      {{- end }}
+{{- end }}

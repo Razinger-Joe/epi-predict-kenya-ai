@@ -1,0 +1,67 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# EpiPredict Kenya AI — DEVELOPMENT Environment Overrides
+# ═══════════════════════════════════════════════════════════════════════════════
+# Usage: helm install epipredict ./helm/epipredict -f helm/epipredict/values-dev.yaml
+#
+# Development profile:
+#   ✅ Single replica per service (save resources)
+#   ✅ HPA disabled (predictable behavior for debugging)
+#   ✅ Lower resource limits (laptop-friendly)
+#   ✅ Debug-friendly settings
+# ═══════════════════════════════════════════════════════════════════════════════
+
+global:
+  environment: development
+
+frontend:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  autoscaling:
+    enabled: false
+
+backend:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  env:
+    environment: development
+    allowedOrigins: "http://localhost,http://localhost:5173,http://epipredict.local,http://localhost:30080"
+  autoscaling:
+    enabled: false
+
+mlService:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+  autoscaling:
+    enabled: false
+
+database:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/limit-rps: "100"

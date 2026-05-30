@@ -1,0 +1,70 @@
+{{/*
+Nginx Ingress — The single entry point for all external traffic.
+═══════════════════════════════════════════════════════════════════
+WHY: Instead of each service having its own door (NodePort), Ingress
+provides ONE front door with intelligent path-based routing:
+
+  http://epipredict.local/          → Frontend (React dashboard)
+  http://epipredict.local/api/      → Backend (FastAPI gateway)
+  http://epipredict.local/health    → Backend health check
+
+Think of it as the reception desk at Kenyatta National Hospital:
+  - One entrance (port 80/443)
+  - The receptionist (Ingress Controller) routes you to the right dept
+  - Department of Internal Medicine → /api/ (Backend)
+  - Outpatient Department → / (Frontend)
+═══════════════════════════════════════════════════════════════════
+*/}}
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "epipredict.fullname" . }}-ingress
+  namespace: {{ include "epipredict.namespace" . }}
+  labels:
+    {{- include "epipredict.labels" . | nindent 4 }}
+  annotations:
+    {{- /* Nginx-specific annotations for performance and security */}}
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+    {{- /* Rewrite /api/ to / so the backend doesn't need /api/ prefix */}}
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host }}
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          # Backend API — matches /api/ and /api/anything
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: {{ include "epipredict.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          # Backend health check — direct access for monitoring
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "epipredict.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          # Frontend — catches everything else (SPA catch-all)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "epipredict.fullname" . }}-frontend
+                port:
+                  number: {{ .Values.frontend.service.port }}
+{{- end }}
