@@ -5,6 +5,38 @@ All notable changes to EpiPredict Kenya AI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-05-29
+
+### Added
+- **Microservices Architecture**: Split monolith into 4 independently deployable tiers
+- **Standalone ML Service** (`ml-service/`): FastAPI microservice for Gaussian Naive Bayes predictions
+- **Kubernetes Manifests** (`k8s/`): Full production-grade Deployments, Services, and PVCs
+  - `database.yaml` — PostgreSQL with PersistentVolumeClaim
+  - `ml-service.yaml` — ML Service with model storage PVC
+  - `backend.yaml` — Backend gateway with env vars for service discovery
+  - `frontend.yaml` — Frontend with NodePort 30080
+- **SQLAlchemy Database Emulator**: Seamless switch between Supabase (cloud) and PostgreSQL (local/k8s)
+- **DevOps Learning Guide** (`docs/KUBERNETES_GUIDE.md`): Comprehensive Kubernetes tutorial
+- **Backend ML Client Proxy**: Stateless HTTP client delegating to ml-service
+
+### Changed
+- **Directory restructure**: Frontend moved from root to `frontend/` directory
+- **Dockerfiles relocated**: Each service now has its own Dockerfile in its directory
+- **docker-compose.yml**: Rewritten for 4-tier orchestration with health-checked boot order
+- **backend/app/config.py**: Added `DATABASE_URL` and `ML_SERVICE_URL` settings
+- **backend/app/database.py**: Full rewrite with SQLAlchemy ↔ Supabase PostgREST emulator
+- **backend/app/services/ml_service.py**: Converted from in-process ML to HTTP client proxy
+- **README.md**: Complete rewrite with architecture diagrams and deployment instructions
+- **DOCKER.md**: Updated for new multi-service stack
+- **.gitignore**: Added Python compiled files, __pycache__, venv exclusions
+
+### Removed
+- Root-level `Dockerfile` (replaced by `backend/Dockerfile`)
+- Root-level `Dockerfile.frontend` (replaced by `frontend/Dockerfile`)
+- Tracked `__pycache__` compiled files from Git index
+
+---
+
 ## [1.1.0] - 2026-03-11
 
 ### Added

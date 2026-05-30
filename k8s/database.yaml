@@ -44,8 +44,6 @@ spec:
           volumeMounts:
             - name: database-storage
               mountPath: /var/lib/postgresql/data
-          healthCheck:
-          # Note: Standard k8s uses livenessProbe and readinessProbe
           livenessProbe:
             exec:
               command:

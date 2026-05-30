@@ -1,130 +1,181 @@
-# ═══════════════════════════════════════════════════════════════════════════════
-# Docker Deployment README
-# Quick reference guide for deploying EpiPredict Kenya AI
-# ═══════════════════════════════════════════════════════════════════════════════
+# 🐳 Docker Deployment Guide — EpiPredict Kenya AI
+
+Quick reference for running EpiPredict Kenya AI with Docker.
+
+---
+
+## 🏗 Architecture
+
+```
+┌──────────┐     ┌──────────┐     ┌──────────────┐     ┌──────────────┐
+│ Frontend │────▶│ Backend  │────▶│ PostgreSQL   │     │  ML Service  │
+│ (Nginx)  │     │ (FastAPI) │────▶│ (database)   │     │  (FastAPI)   │
+│ :80      │     │ :8000    │     │ :5432        │     │  :5000       │
+└──────────┘     └──────────┘     └──────────────┘     └──────────────┘
+```
+
+---
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Docker Desktop installed
-- Docker Compose v3.8+
-- `.env.production` file configured
-
-### Local Development
-
 ```bash
-# 1. Create environment file
-cp .env.production.example .env
+# 1. Clone and navigate
+git clone https://github.com/Razinger-Joe/epi-predict-kenya-ai.git
+cd epi-predict-kenya-ai
 
-# 2. Build and start all services
+# 2. Build and start all 4 services
 docker-compose up --build
 
 # 3. Access the application
-# Frontend: http://localhost
-# Backend API: http://localhost:8000
-# API Docs: http://localhost:8000/docs
+# Frontend:   http://localhost
+# Backend:    http://localhost:8000
+# API Docs:   http://localhost:8000/docs
+# ML Service: http://localhost:5000/health
 ```
 
-### Production Deployment
+---
 
-#### Option 1: Railway
+## 📦 Services
+
+| Service | Build Context | Port | Image |
+|---------|--------------|------|-------|
+| **database-service** | `postgres:15-alpine` | 5432 | Pre-built |
+| **ml-service** | `./ml-service` | 5000 | Custom |
+| **backend** | `./backend` | 8000 | Custom |
+| **frontend** | `./frontend` | 80 | Custom |
+
+### Boot Order
+
+Services start in dependency order with health checks:
+
+```
+1. database-service  (PostgreSQL — pg_isready health check)
+2. ml-service        (FastAPI ML — curl /health)
+3. backend           (FastAPI Gateway — waits for DB + ML to be healthy)
+4. frontend          (Nginx — waits for backend to be healthy)
+```
+
+---
+
+## 🔧 Build Individual Images
+
 ```bash
-# Install Railway CLI
-npm install -g @railway/cli
+# Build each service independently
+docker build -t epipredict-frontend:latest ./frontend
+docker build -t epipredict-backend:latest ./backend
+docker build -t epipredict-ml-service:latest ./ml-service
 
-# Login to Railway
-railway login
-
-# Deploy
-railway up
+# View built images
+docker images | grep epipredict
 ```
 
-#### Option 2: Render
-1. Connect your GitHub repository
-2. Set environment variables in dashboard
-3. Deploy from `docker-compose.yml`
-
-#### Option 3: Manual Docker Deployment
-```bash
-# Build images
-docker-compose build
-
-# Push to registry (if needed)
-docker tag epipredict-backend:latest your-registry/epipredict-backend
-docker push your-registry/epipredict-backend
-
-# Deploy on server
-docker-compose up -d
-```
+---
 
 ## 📊 Health Checks
 
 ```bash
-# Check service status
+# Check all service statuses
 docker-compose ps
 
-# View logs
-docker-compose logs -f
+# View logs for a specific service
+docker-compose logs -f backend
+docker-compose logs -f ml-service
 
 # Check backend health
 curl http://localhost:8000/health
+
+# Check ML service health
+curl http://localhost:5000/health
 
 # Check frontend
 curl http://localhost/
 ```
 
-## 🔧 Troubleshooting
+---
 
-### Backend won't start
-```bash
-# Check logs
-docker-compose logs backend
-
-# Rebuild without cache
-docker-compose build --no-cache backend
-docker-compose up backend
-```
-
-### Frontend 404 errors
-- Verify nginx.conf is copied correctly
-- Check frontend build completed: `docker-compose logs frontend`
-
-### Database connection issues
-- Verify Supabase credentials in `.env`
-- Check `DATABASE_URL` format
-
-## 🛡️ Security Checklist
-
-- [ ] `.env` files NOT committed to Git
-- [ ] Production secrets stored in CI/CD secrets
-- [ ] HTTPS enabled (production)
-- [ ] Security headers configured (nginx.conf)
-- [ ] CORS origins restricted
-
-## 📈 Monitoring
+## 🔄 Common Operations
 
 ```bash
-# Resource usage
-docker stats
+# Start in background (detached)
+docker-compose up -d --build
 
-# Container inspect
-docker inspect epipredict-backend
+# Restart a single service
+docker-compose restart backend
 
-# Network inspection
-docker network inspect epipredict-network
-```
+# Rebuild a single service
+docker-compose up --build backend
 
-## 🔄 Updates
-
-```bash
-# Pull latest changes
-git pull origin main
-
-# Rebuild and restart
+# Stop all services
 docker-compose down
-docker-compose up --build -d
+
+# Stop and remove all data (volumes)
+docker-compose down -v
+
+# View resource usage
+docker stats
 ```
 
 ---
 
-**For full documentation, see**: `implementation_plan.md`
+## 🔧 Troubleshooting
+
+### Backend won't start
+```bash
+docker-compose logs backend
+docker-compose build --no-cache backend
+docker-compose up backend
+```
+
+### Database connection issues
+- Verify the backend can reach `database-service:5432`
+- Check `DATABASE_URL` is set correctly in docker-compose.yml
+```bash
+docker exec -it epipredict-backend sh
+# Inside the container:
+curl database-service:5432
+```
+
+### ML Service errors
+```bash
+docker-compose logs ml-service
+# Check if models directory is accessible
+docker exec -it epipredict-ml-service ls /app/models
+```
+
+### Frontend 404 errors
+```bash
+docker-compose logs frontend
+# Verify nginx config is correct
+docker exec -it epipredict-frontend cat /etc/nginx/nginx.conf
+```
+
+---
+
+## 🛡️ Security Checklist
+
+- [ ] `.env` files are NOT committed to Git
+- [ ] Production secrets stored in CI/CD secrets
+- [ ] HTTPS enabled in production
+- [ ] Security headers configured in `nginx.conf`
+- [ ] CORS origins restricted in backend config
+- [ ] Database passwords changed from defaults
+
+---
+
+## ☸️ Kubernetes
+
+For Kubernetes deployment, see:
+- **Manifests**: `k8s/` directory
+- **Learning Guide**: [docs/KUBERNETES_GUIDE.md](docs/KUBERNETES_GUIDE.md)
+
+```bash
+# Deploy to Kubernetes
+kubectl apply -f k8s/
+
+# Access via NodePort
+curl http://localhost:30080
+```
+
+---
+
+**For full documentation, see**: [README.md](README.md)

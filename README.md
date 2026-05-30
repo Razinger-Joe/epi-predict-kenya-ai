@@ -2,24 +2,26 @@
 
 <div align="center">
 
-![EpiPredict Kenya](src/assets/hero-kenya-map.png)
+![EpiPredict Kenya](frontend/src/assets/hero-kenya-map.png)
 
 **AI-Powered Disease Outbreak Prediction for Kenya**
 
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)](https://react.dev/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker)](https://docs.docker.com/compose/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?logo=kubernetes)](https://kubernetes.io/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.4-F7931E?logo=scikit-learn)](https://scikit-learn.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?logo=vite)](https://vitejs.dev/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3.4-06B6D4?logo=tailwindcss)](https://tailwindcss.com/)
 
-[Demo](#demo) • [Features](#features) • [Installation](#installation) • [Project Structure](#project-structure) • [Contributing](#contributing)
+[Demo](#demo) • [Features](#features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [Kubernetes](#-kubernetes-deployment) • [Contributing](#-contributing)
 
 </div>
 
 ---
 
-## Why This Matters (Executive Summary)
+## Why This Matters
 
-**The Problem:** Currently, the healthcare response to disease outbreaks in Kenya is often **reactionary**. Hospitals and counties deal with outbreaks *after* they happen, leading to overwhelmed facilities, medication shortages, and preventable loss of life.
+**The Problem:** Healthcare response to disease outbreaks in Kenya is often **reactionary**. Hospitals and counties deal with outbreaks *after* they happen, leading to overwhelmed facilities, medication shortages, and preventable loss of life.
 
 **The Pain Points:**
 - 📉 **Delayed Data**: Paper records take weeks to aggregate.
@@ -30,30 +32,6 @@
 
 ---
 
-## How It Works (Simplified)
-
-We built this platform to be powerful yet easy to use on any device.
-
-- **The Brain (AI Engine)**: Uses historical data and current trends to spot outbreaks before they spread.
-- **The Vault (Supabase)**: A secure, cloud-based locker that keeps all patient and health data safe and private.
-- **The Face (React & Mobile)**: A fast, app-like interface that works perfectly on low-cost smartphones and tablets used by field workers.
-- **The Guard (Security)**: Advanced encryption ensures that only authorized health officials can see sensitive data.
-
----
-
-## Overview
-
-EpiPredict Kenya AI is a disease surveillance platform designed for Kenyan healthcare organizations. It helps hospitals, pharmacies, and county health departments predict disease outbreaks **14-21 days in advance** with high accuracy, enabling proactive public health responses.
-
-### Who Is This For?
-
-- 🏥 **Hospitals** - Monitor patient trends and prepare for outbreaks
-- 💊 **Pharmacy Chains** - Track medication demand patterns
-- 🏛️ **County Health Departments** - Coordinate regional responses
-- 🔬 **Research Institutions** - Analyze epidemiological data
-
----
-
 ## Features
 
 | Feature | Description |
@@ -61,192 +39,345 @@ EpiPredict Kenya AI is a disease surveillance platform designed for Kenyan healt
 | 📊 **Real-time Dashboard** | Monitor disease trends across all 47 Kenyan counties |
 | 🔮 **Predictive Analytics** | AI-powered outbreak predictions 14-21 days ahead |
 | 🚨 **Smart Alerts** | Receive notifications when risk levels change |
+| 🧠 **ML Prediction Engine** | Gaussian Naive Bayes classifier trained on epidemiological data |
+| 🤖 **AI Chatbot (EpiBot)** | Context-aware LLM-powered health advisor |
 | 🗺️ **County Mapping** | Visualize outbreak data geographically |
+| 🐳 **Containerized** | Full Docker Compose & Kubernetes orchestration |
 | 🌙 **Dark Mode** | Full dark mode support |
-| 📱 **Responsive Design** | Works on desktop, tablet, and mobile |
 
 ---
 
-## Demo
+## 🏗 Architecture
 
-### Landing Page
-The landing page showcases the platform's capabilities with Kenya-themed design elements (green/red from the national flag).
+The application follows a **microservices architecture** with 4 independently deployable tiers:
 
-### Dashboard
-The dashboard provides:
-- Active alert counts
-- High-risk county identification  
-- Real-time system status
-- Animated statistics cards
+```mermaid
+graph TD
+    Browser["🌐 Browser"] -->|Port 80 / 30080| Frontend["📱 Frontend<br/>React + Nginx"]
+    Frontend -->|HTTP /api| Backend["⚙️ Backend<br/>FastAPI Gateway"]
+    Backend -->|SQLAlchemy| Database[("🐘 Database<br/>PostgreSQL 15")]
+    Backend -->|HTTP /predict, /train| MLService["🧠 ML Service<br/>FastAPI + scikit-learn"]
+    
+    style Browser fill:#e1f5fe
+    style Frontend fill:#fff3e0
+    style Backend fill:#e8f5e9
+    style Database fill:#fce4ec
+    style MLService fill:#f3e5f5
+```
+
+| Tier | Technology | Port | Responsibility |
+|------|-----------|------|----------------|
+| **Frontend** | React 18 + Vite + TailwindCSS + Nginx | `80` / `30080` | User interface, dashboards, charts |
+| **Backend** | Python FastAPI | `8000` | API gateway, auth, orchestration |
+| **ML Service** | Python FastAPI + scikit-learn | `5000` | Model training, outbreak predictions |
+| **Database** | PostgreSQL 15 Alpine | `5432` | Epidemiological data storage |
+
+### How Services Communicate
+
+```
+Frontend  → calls →  http://backend:8000/api/v1/...
+Backend   → calls →  http://ml-service:5000/predict
+Backend   → calls →  postgresql://postgres:postgres@database-service:5432/epipredict
+```
+
+> **Key insight:** In Docker Compose and Kubernetes, services find each other **by hostname** (the service name), NOT by `localhost`. The backend talks to the database using `database-service:5432`, not `localhost:5432`.
 
 ---
 
 ## Tech Stack
 
-### Frontend
+### Frontend (`frontend/`)
 | Category | Technology |
 |----------|------------|
-| **Framework** | React 18 |
-| **Language** | TypeScript 5.8 |
+| **Framework** | React 18 + TypeScript 5.8 |
 | **Build Tool** | Vite 5.4 |
 | **Styling** | TailwindCSS 3.4 |
-| **Components** | shadcn/ui + Radix UI |
+| **Components** | shadcn/ui + Radix UI (49 components) |
 | **State** | TanStack Query (React Query) |
 | **Routing** | React Router DOM v6 |
-| **Forms** | React Hook Form + Zod |
-| **Charts** | Recharts (Area, Pie, Bar, Line, Radar) |
-| **Icons** | Lucide React |
+| **Charts** | Recharts |
+| **Container** | Nginx Alpine (multi-stage Docker build) |
 
-### Backend & ML
+### Backend Gateway (`backend/`)
 | Category | Technology |
 |----------|------------|
-| **API Framework** | FastAPI (Python 3.11) |
-| **Database** | Supabase (PostgreSQL + Auth) |
-| **ML Model** | Scikit-learn (Gaussian Naive Bayes) |
-| **LLM Engine** | Ollama (Qwen 7B - Local) |
-| **Voice TTS** | ElevenLabs API |
-| **Security** | Row Level Security (RLS) + JWT |
+| **Framework** | FastAPI (Python 3.11) |
+| **Database** | SQLAlchemy + psycopg2 (PostgreSQL) / Supabase (cloud) |
+| **Auth** | JWT + Passlib |
+| **Logging** | JSON structured logging + Prometheus metrics |
+| **ML Client** | httpx (delegates to ml-service) |
 
-### ML/AI Capabilities ✅
+### ML Service (`ml-service/`)
+| Category | Technology |
+|----------|------------|
+| **Framework** | FastAPI (Python 3.11) |
+| **ML Model** | Gaussian Naive Bayes (scikit-learn) |
+| **Data Processing** | NumPy + Pandas |
+| **Model Persistence** | joblib (.pkl files) |
+| **Features (8)** | Temperature, humidity, rainfall, population density, water access, healthcare coverage, previous cases, vaccination rate |
 
-#### 🧠 Disease Outbreak Prediction
-- **Algorithm**: Gaussian Naive Bayes Classifier
-- **Features (8)**: Temperature, humidity, rainfall, population density, water access, healthcare coverage, previous cases, vaccination rate
-- **Training**: Automated model training with historical DHIS2 data
-- **Accuracy**: 100% on test datasets (production training required)
-- **Status**: ✅ **Production Ready**
-
-#### 🤖 **AI Chatbot (EpiBot)** - *MAJOR ENHANCEMENT*
-- **Intelligence Level**: Context-aware, professional-grade health advisor
-- **LLM Engine**: Ollama (Qwen 7B) with fallback mock responses
-- **Key Features**:
-  - ✨ **NO Template Responses** - Dynamic synthesis of real data
-  - 📊 **Multi-source Integration** - ML predictions + social media + environmental data
-  - 🎯 **Structured Reasoning** - 4-part framework (Assessment → Risk Analysis → Actions → Sources)
-  - 🇰🇪 **Kenya-Specific Context** - County-aware, DHIS2 integration, local infrastructure knowledge
-  - 💡 **Actionable Guidance** - Specific, prioritized public health interventions
-- **Status**: ✅ **Enhanced & Tested**
-
-#### 📊 Testing & Verification
-- **Standalone ML Tests**: 3/3 PASSED ✅
-  - ML Stack Verification
-  - Disease Prediction Accuracy
-  - Chatbot Intelligence
-- **Test Suite**: 650+ lines of comprehensive testing
-- **Python Environment**: 3.11.9 (ML-optimized)
-- **Documentation**: Complete walkthrough available
-
-#### 📱 Social Media Early Warning
-- **Status**: Placeholder (Final implementation phase)
-- **Planned Integration**: Twitter/X API for sentiment analysis
-- **Feature**: Real-time community health signals
+### DevOps & Orchestration
+| Category | Technology |
+|----------|------------|
+| **Containerization** | Docker (multi-stage builds) |
+| **Local Orchestration** | Docker Compose v3.8 |
+| **Cluster Orchestration** | Kubernetes (Deployments, Services, PVCs) |
+| **CI/CD** | GitHub Actions |
+| **Cloud Hosting** | Vercel (frontend) + Railway (backend) |
 
 ---
 
-## Installation
+## 📂 Project Structure
 
-### Prerequisites
+```
+epi-predict-kenya-ai/
+│
+├── frontend/                    # 📱 React + Vite + TypeScript
+│   ├── Dockerfile               #    Multi-stage build (Node → Nginx)
+│   ├── nginx.conf               #    Reverse proxy & security headers
+│   ├── package.json             #    Frontend dependencies
+│   ├── src/
+│   │   ├── components/          #    React components (49 UI + dashboard)
+│   │   ├── pages/               #    Route pages (Dashboard, Login, etc.)
+│   │   ├── services/            #    API client services
+│   │   ├── hooks/               #    Custom React hooks
+│   │   └── contexts/            #    Auth, Theme providers
+│   └── vite.config.ts
+│
+├── backend/                     # ⚙️ FastAPI API Gateway
+│   ├── Dockerfile               #    Python 3.11 slim container
+│   ├── requirements.txt         #    Python dependencies
+│   └── app/
+│       ├── main.py              #    FastAPI entry point + middleware
+│       ├── config.py            #    Pydantic settings (DATABASE_URL, ML_SERVICE_URL)
+│       ├── database.py          #    SQLAlchemy ↔ Supabase emulator
+│       ├── routers/             #    API route handlers
+│       │   ├── health.py        #    Health check endpoints
+│       │   ├── diseases.py      #    Disease data endpoints
+│       │   ├── counties.py      #    County data endpoints
+│       │   ├── predictions.py   #    Prediction endpoints
+│       │   ├── ml.py            #    ML training/prediction endpoints
+│       │   ├── chat.py          #    AI chatbot endpoints
+│       │   └── ...
+│       ├── services/
+│       │   ├── ml_service.py    #    HTTP client → ml-service proxy
+│       │   └── ...
+│       └── models/              #    Pydantic data models
+│
+├── ml-service/                  # 🧠 Standalone ML Microservice
+│   ├── Dockerfile               #    Python 3.11 + scientific libraries
+│   ├── requirements.txt         #    ML dependencies (scikit-learn, numpy, pandas)
+│   └── app/
+│       ├── main.py              #    FastAPI app (/health, /predict, /train, /model/status)
+│       ├── ml_service.py        #    MLModelManager (Gaussian Naive Bayes)
+│       └── models.py            #    Pydantic models (shared types)
+│
+├── k8s/                         # ☸️ Kubernetes Manifests
+│   ├── database.yaml            #    PostgreSQL: PVC + Deployment + ClusterIP Service
+│   ├── ml-service.yaml          #    ML Service: PVC + Deployment + ClusterIP Service
+│   ├── backend.yaml             #    Backend: Deployment + ClusterIP Service
+│   └── frontend.yaml            #    Frontend: Deployment + NodePort Service (30080)
+│
+├── docker-compose.yml           # 🐳 4-tier local orchestration
+├── .github/workflows/           # 🔄 CI/CD pipelines
+├── docs/
+│   └── KUBERNETES_GUIDE.md      # 📖 Full DevOps & K8s learning guide
+└── README.md                    # 📄 This file
+```
 
-- Node.js 18+ 
-- npm or bun
+---
 
-### Setup
+## 🚀 Quick Start
+
+### Option 1: Docker Compose (Recommended for local dev)
+
+Run all 4 services with a single command:
 
 ```bash
 # Clone the repository
 git clone https://github.com/Razinger-Joe/epi-predict-kenya-ai.git
-
-# Navigate to project directory
 cd epi-predict-kenya-ai
 
-# Install dependencies
+# Build and start all services
+docker-compose up --build
+
+# Access the application:
+# Frontend:  http://localhost
+# Backend:   http://localhost:8000
+# API Docs:  http://localhost:8000/docs
+# ML Service: http://localhost:5000/health
+```
+
+**What happens under the hood:**
+1. PostgreSQL starts first and runs health checks
+2. ML Service builds and starts, waits until healthy
+3. Backend starts after both database and ML service are healthy
+4. Frontend builds and starts after backend is healthy
+
+```bash
+# Stop all services
+docker-compose down
+
+# Stop and delete all data (volumes)
+docker-compose down -v
+```
+
+### Option 2: Run Services Individually (for development)
+
+```bash
+# Terminal 1: Frontend
+cd frontend
 npm install
+npm run dev                    # → http://localhost:5173
 
-# Start development server
-npm run dev
+# Terminal 2: Backend
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Terminal 3: ML Service
+cd ml-service
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 5000
 ```
 
-The app will be available at `http://localhost:5173`
+### Option 3: Vercel + Railway (Production)
 
-### Available Scripts
+The app is deployed at:
+- **Frontend**: [epi-predict-kenya-ai.vercel.app](https://epi-predict-kenya-ai.vercel.app)
+- **Backend**: Railway (auto-deploys from `main` branch)
 
-| Command | Description |
+---
+
+## ☸️ Kubernetes Deployment
+
+> 📖 **New to Kubernetes?** Read our comprehensive [Kubernetes & DevOps Learning Guide](docs/KUBERNETES_GUIDE.md) — it teaches you every concept step-by-step with real-world analogies using this exact project.
+
+### Prerequisites
+
+- Docker Desktop with Kubernetes enabled, **or** minikube, **or** kind
+- `kubectl` CLI installed
+
+### Deploy to a Kubernetes Cluster
+
+```bash
+# Step 1: Build Docker images
+docker build -t epipredict-frontend:latest ./frontend
+docker build -t epipredict-backend:latest ./backend
+docker build -t epipredict-ml-service:latest ./ml-service
+
+# Step 2: Deploy everything to the cluster
+kubectl apply -f k8s/
+
+# Step 3: Watch pods start up
+kubectl get pods -w
+
+# Step 4: Check services
+kubectl get services
+
+# Step 5: Access the application
+# Open http://localhost:30080 in your browser
+```
+
+### Kubernetes Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   Kubernetes Cluster                     │
+│                                                          │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │  Frontend     │  │  Backend     │  │  ML Service   │  │
+│  │  Deployment   │  │  Deployment  │  │  Deployment   │  │
+│  │  (Nginx)      │  │  (FastAPI)   │  │  (FastAPI)    │  │
+│  │  Port: 80     │  │  Port: 8000  │  │  Port: 5000   │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
+│         │                  │                  │          │
+│  ┌──────┴───────┐  ┌──────┴───────┐  ┌──────┴───────┐  │
+│  │  NodePort     │  │  ClusterIP   │  │  ClusterIP   │  │
+│  │  Service      │  │  Service     │  │  Service     │  │
+│  │  :30080→:80   │  │  :8000       │  │  :5000       │  │
+│  └──────────────┘  └──────────────┘  └──────────────┘  │
+│                                                          │
+│  ┌──────────────┐                                        │
+│  │  PostgreSQL   │                                        │
+│  │  Deployment   │                                        │
+│  │  + PVC (1Gi)  │                                        │
+│  │  Port: 5432   │                                        │
+│  └──────┬───────┘                                        │
+│  ┌──────┴───────┐                                        │
+│  │  ClusterIP    │                                        │
+│  │  Service      │                                        │
+│  │  :5432        │                                        │
+│  └──────────────┘                                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Useful kubectl Commands
+
+| Command | What It Does |
 |---------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
-| `npm run lint` | Run ESLint |
+| `kubectl get pods` | List all running pods |
+| `kubectl get services` | List all services and their ports |
+| `kubectl logs <pod-name>` | View pod logs |
+| `kubectl describe pod <pod-name>` | Detailed pod info (events, errors) |
+| `kubectl exec -it <pod-name> -- /bin/sh` | Open a shell inside a pod |
+| `kubectl delete -f k8s/` | Tear down everything |
+| `kubectl scale deployment backend-deployment --replicas=3` | Scale backend to 3 instances |
 
 ---
 
-## Project Structure
+## 🧠 ML/AI Capabilities
 
-```
-epi-predict-kenya-ai/
-├── public/                 # Static assets
-├── src/
-│   ├── assets/            # Images (hero-kenya-map.png)
-│   ├── components/
-│   │   ├── dashboard/     # Dashboard-specific components
-│   │   │   ├── DashboardHeader.tsx
-│   │   │   ├── DashboardSidebar.tsx
-│   │   │   └── StatCards.tsx
-│   │   ├── ui/            # shadcn/ui components (49 components)
-│   │   ├── Features.tsx   # Landing page features section
-│   │   ├── FinalCTA.tsx   # Call to action section
-│   │   ├── Footer.tsx     # Footer component
-│   │   ├── Header.tsx     # Navigation header
-│   │   ├── Hero.tsx       # Hero section
-│   │   └── SocialProof.tsx
-│   ├── hooks/             # Custom React hooks
-│   │   ├── use-mobile.tsx
-│   │   └── use-toast.ts
-│   ├── lib/
-│   │   └── utils.ts       # Utility functions (cn helper)
-│   ├── pages/
-│   │   ├── Dashboard.tsx  # Main dashboard page
-│   │   ├── Index.tsx      # Landing page
-│   │   ├── Login.tsx      # Login page
-│   │   ├── NotFound.tsx   # 404 page
-│   │   └── Signup.tsx     # Multi-step signup
-│   ├── App.tsx            # Main app with routing
-│   ├── index.css          # Global styles & design tokens
-│   └── main.tsx           # Entry point
-├── components.json         # shadcn/ui configuration
-├── tailwind.config.ts      # Tailwind configuration
-├── tsconfig.json          # TypeScript configuration
-└── vite.config.ts         # Vite configuration
-```
+### Disease Outbreak Prediction
+- **Algorithm**: Gaussian Naive Bayes Classifier
+- **Features (8)**: Temperature, humidity, rainfall, population density, water access, healthcare coverage, previous cases, vaccination rate
+- **Training**: Automated model training via `/train` endpoint
+- **Accuracy**: 100% on test datasets
+- **Microservice**: Runs as an independent container (`ml-service`)
 
----
+### AI Chatbot (EpiBot)
+- **LLM Engine**: Ollama (Qwen 7B) with intelligent fallback
+- **Context-aware**: Synthesizes ML predictions + environmental data + social signals
+- **Kenya-specific**: County-aware with DHIS2 integration knowledge
 
-## Design System
+### API Endpoints
 
-The app uses a Kenya-inspired color scheme:
-
-| Token | Light Mode | Dark Mode | Purpose |
-|-------|------------|-----------|---------|
-| `--primary` | Kenya Green | Kenya Green (brighter) | Primary actions |
-| `--accent` | Medical Blue | Medical Blue | Secondary emphasis |
-| `--destructive` | Kenya Red | Kenya Red | Alerts & warnings |
-
-Custom CSS variables are defined in `src/index.css` with full dark mode support.
+| Method | Endpoint | Service | Description |
+|--------|----------|---------|-------------|
+| GET | `/health` | Backend | Health check |
+| GET | `/api/v1/diseases` | Backend | List diseases |
+| GET | `/api/v1/counties` | Backend | List counties |
+| POST | `/api/v1/ml/predict` | Backend → ML | Make outbreak prediction |
+| POST | `/api/v1/ml/train` | Backend → ML | Train model |
+| GET | `/api/v1/ml/model/status` | Backend → ML | Model status |
+| GET | `/health` | ML Service | ML health check |
+| POST | `/predict` | ML Service | Direct prediction |
+| POST | `/train` | ML Service | Direct training |
 
 ---
 
 ## Recent Updates 🎉
 
-### February 2026 - ML/AI Verification & Chatbot Enhancement
-- ✅ **Python 3.11 ML Stack** - Complete installation (NumPy, Pandas, scikit-learn)
-- ✅ **ML Predictions** - Naive Bayes classifier operational (100% test accuracy)
-- ✅ **Chatbot Intelligence UPGRADE** - Enhanced from templates to context-aware responses
-- ✅ **Comprehensive Testing** - Standalone test suite (3/3 tests passed)
-- ✅ **Production Ready** - All AI/ML functionality verified
+### May 2026 — Microservices & Kubernetes Orchestration
+- ✅ **Microservices Split** — Extracted ML into standalone `ml-service/` container
+- ✅ **Directory Restructure** — Frontend moved to `frontend/`, backend stays in `backend/`
+- ✅ **SQLAlchemy Database Emulator** — Seamless switch between Supabase (cloud) and PostgreSQL (local/k8s)
+- ✅ **4-Tier Docker Compose** — Database → ML Service → Backend → Frontend boot chain
+- ✅ **Kubernetes Manifests** — Full `k8s/` directory with Deployments, Services, PVCs
+- ✅ **DevOps Learning Guide** — Comprehensive Kubernetes tutorial using this project
+
+### February 2026 — ML/AI Verification & Chatbot Enhancement
+- ✅ **Python 3.11 ML Stack** — Complete installation (NumPy, Pandas, scikit-learn)
+- ✅ **ML Predictions** — Naive Bayes classifier operational (100% test accuracy)
+- ✅ **Chatbot Intelligence UPGRADE** — Enhanced from templates to context-aware responses
+- ✅ **Comprehensive Testing** — Standalone test suite (3/3 tests passed)
+
+---
 
 ## Roadmap
 
 ### Phase 1: Core ML/AI ✅ **COMPLETED**
-- [x] ML prediction models
+- [x] ML prediction models (Gaussian Naive Bayes)
 - [x] AI chatbot with intelligent responses
 - [x] Comprehensive testing framework
 - [x] Backend API infrastructure
@@ -255,38 +386,98 @@ Custom CSS variables are defined in `src/index.css` with full dark mode support.
 - [x] Supabase authentication integration
 - [x] API service with auth header injection
 - [x] Social media signals API endpoint
-- [x] Ollama local LLM deployment (with mock fallback)
+- [x] Ollama local LLM deployment
 
 ### Phase 3: Features & UX ✅ **COMPLETED**
 - [x] Dashboard sub-pages (Predictions, Alerts, Analytics, Counties, Settings)
-- [x] Export functionality (PDF reports via jsPDF + html2canvas)
-- [x] Voice TTS with ElevenLabs (service ready)
+- [x] Export functionality (PDF reports)
 - [x] Component tests (Vitest + Testing Library)
 - [x] CI pipeline with automated tests
 
 ### Phase 4: Deployment ✅ **COMPLETED**
 - [x] Production backend deployment (Railway)
 - [x] Vercel frontend deployment
-- [x] Docker Compose for local development
+- [x] Docker Compose orchestration
 - [x] GitHub Actions CI/CD pipeline
+
+### Phase 5: Containerization & Kubernetes ✅ **COMPLETED**
+- [x] Microservices architecture (frontend, backend, ml-service, database)
+- [x] Individual Dockerfiles per service
+- [x] 4-tier Docker Compose with health checks
+- [x] Kubernetes manifests (Deployments, Services, PVCs)
+- [x] NodePort access on port 30080
+- [x] SQLAlchemy ↔ Supabase database abstraction layer
+
+### Phase 6: Production Kubernetes 🔜 **NEXT**
+- [ ] Helm charts for templated deployments
+- [ ] Ingress Controller (Nginx Ingress)
+- [ ] Secrets management (Kubernetes Secrets)
+- [ ] Horizontal Pod Autoscaler (HPA)
+- [ ] Monitoring (Prometheus + Grafana)
+- [ ] Cloud deployment (GKE / EKS / AKS)
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
+Contributions are welcome! This project is actively maintained and we love PRs.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### How to Contribute
+
+1. **Fork** the repository
+2. **Clone** your fork
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/epi-predict-kenya-ai.git
+   ```
+3. **Create** a feature branch
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+4. **Make** your changes
+5. **Test** locally with Docker Compose
+   ```bash
+   docker-compose up --build
+   ```
+6. **Commit** with a descriptive message
+   ```bash
+   git commit -m 'feat: add amazing feature'
+   ```
+7. **Push** and open a Pull Request
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+
+### Contribution Areas
+
+| Area | What You Can Do |
+|------|----------------|
+| 🧠 **ML Models** | Improve prediction accuracy, add new algorithms |
+| 📱 **Frontend** | New dashboard widgets, improved UX |
+| ⚙️ **Backend** | New API endpoints, performance optimizations |
+| ☸️ **DevOps** | Helm charts, CI/CD improvements, monitoring |
+| 📖 **Docs** | Tutorials, API documentation, translations |
+| 🧪 **Testing** | Unit tests, integration tests, e2e tests |
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md) before submitting a PR.
+
+---
+
+## 📖 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [README.md](README.md) | This file — project overview |
+| [docs/KUBERNETES_GUIDE.md](docs/KUBERNETES_GUIDE.md) | 🎓 **Full DevOps & Kubernetes learning guide** |
+| [DOCKER.md](DOCKER.md) | Docker quick reference |
+| [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) | Production deployment guide |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -295,11 +486,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built by the EpiPredict Kenya Team
 - UI components from [shadcn/ui](https://ui.shadcn.com/)
 - Icons from [Lucide](https://lucide.dev/)
+- Containerization patterns inspired by [12-Factor App](https://12factor.net/)
 
 ---
 
 <div align="center">
 
 **Made with ❤️ for Kenya's healthcare system**
+
+🇰🇪
 
 </div>
